@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCode Sync Manager</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { text-align: center; padding: 30px 0; color: #00d4ff; }
+    .nav { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 30px; }
+    .nav button { padding: 12px 24px; background: #16213e; border: 1px solid #0f3460; color: #00d4ff; cursor: pointer; border-radius: 8px; font-size: 14px; transition: all 0.2s; }
+    .nav button:hover, .nav button.active { background: #0f3460; border-color: #00d4ff; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .card { background: #16213e; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #0f3460; }
+    .card h2 { color: #00d4ff; margin-bottom: 15px; font-size: 18px; }
+    .card p { color: #888; margin-bottom: 10px; }
+    .status { padding: 15px; background: #0f3460; border-radius: 8px; margin-bottom: 15px; }
+    .status.success { border-left: 4px solid #00ff88; }
+    .status.error { border-left: 4px solid #ff4444; }
+    .status.info { border-left: 4px solid #00d4ff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #0f3460; }
+    th { color: #00d4ff; }
+    .btn { padding: 8px 16px; background: #00d4ff; color: #1a1a2e; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn:hover { background: #00b8e6; }
+    .btn.danger { background: #ff4444; color: #fff; }
+    .btn.small { padding: 6px 12px; font-size: 12px; }
+    input, select { padding: 10px; background: #0f3460; border: 1px solid #16213e; color: #fff; border-radius: 6px; margin-right: 10px; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: #888; }
+    .form-group input, .form-group select { width: 100%; max-width: 300px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+    .item { background: #0f3460; padding: 15px; border-radius: 8px; }
+    .item h3 { color: #00d4ff; margin-bottom: 8px; }
+    .item .meta { color: #666; font-size: 12px; margin-bottom: 10px; }
+    .json-output { background: #0a0a15; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 12px; white-space: pre; max-height: 300px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 OpenCode Sync Manager</h1>
+    
+    <div class="nav">
+      <button class="active" onclick="showSection('agents')">Agents</button>
+      <button onclick="showSection('mcp')">MCP Servers</button>
+      <button onclick="showSection('skills')">Skills</button>
+      <button onclick="showSection('plugins')">Plugins</button>
+      <button onclick="showSection('sessions')">Sessions</button>
+      <button onclick="showSection('sync')">Git Sync</button>
+      <button onclick="showSection('status')">Status</button>
+    </div>
+
+    <div id="agents" class="section active">
+      <div class="card">
+        <h2>Create New Agent</h2>
+        <div class="form-group">
+          <label>Agent Name</label>
+          <input type="text" id="agentName" placeholder="my-agent">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" id="agentDesc" placeholder="Agent purpose">
+        </div>
+        <div class="form-group">
+          <label>Mode</label>
+          <select id="agentMode">
+            <option value="primary">Primary</option>
+            <option value="subagent">Subagent</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tools (comma-separated)</label>
+          <input type="text" id="agentTools" placeholder="bash,read,write,edit,glob,grep">
+        </div>
+        <button class="btn" onclick="createAgent()">Create Agent</button>
+      </div>
+      
+      <div class="card">
+        <h2>Current Agents</h2>
+        <div id="agentsList"></div>
+      </div>
+    </div>
+
+    <div id="mcp" class="section">
+      <div class="card">
+        <h2>Add MCP Server</h2>
+        <div class="form-group">
+          <label>Server Name</label>
+          <input type="text" id="mcpName" placeholder="server-name">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="mcpType">
+            <option value="local">Local</option>
+            <option value="remote">Remote</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Command/URL</label>
+          <input type="text" id="mcpCommand" placeholder="npx or https://...">
+        </div>
+        <button class="btn" onclick="addMCP()">Add MCP Server</button>
+      </div>
+      
+      <div class="card">
+        <h2>MCP Servers</h2>
+        <div id="mcpList"></div>
+      </div>
+    </div>
+
+    <div id="skills" class="section">
+      <div class="card">
+        <h2>Add Skill</h2>
+        <div class="form-group">
+          <label>Skill Name</label>
+          <input type="text" id="skillName" placeholder="skill-name">
+        </div>
+        <div class="form-group">
+          <label>Path or URL</label>
+          <input type="text" id="skillPath" placeholder="./skills or https://...">
+        </div>
+        <button class="btn" onclick="addSkill()">Add Skill</button>
+      </div>
+      
+      <div class="card">
+        <h2>Skills</h2>
+        <div id="skillsList"></div>
+      </div>
+    </div>
+
+    <div id="plugins" class="section">
+      <div class="card">
+        <h2>Install Plugin</h2>
+        <div class="form-group">
+          <label>Module Name</label>
+          <input type="text" id="pluginModule" placeholder="package-name">
+        </div>
+        <label><input type="checkbox" id="pluginGlobal"> Global Install</label>
+        <br><br>
+        <button class="btn" onclick="addPlugin()">Install Plugin</button>
+      </div>
+      
+      <div class="card">
+        <h2>Installed Plugins</h2>
+        <div id="pluginsList"></div>
+      </div>
+    </div>
+
+    <div id="sessions" class="section">
+      <div class="card">
+        <h2>Sync Sessions</h2>
+        <button class="btn" onclick="syncAllSessions()">Sync All Sessions</button>
+        <button class="btn" onclick="exportAllSessions()">Export All Sessions</button>
+      </div>
+      
+      <div class="card">
+        <h2>Sessions</h2>
+        <div id="sessionsList"></div>
+      </div>
+    </div>
+
+    <div id="sync" class="section">
+      <div class="card">
+        <h2>Git Sync Settings</h2>
+        <div class="form-group">
+          <label>Remote URL</label>
+          <input type="text" id="remoteUrl" placeholder="https://github.com/user/repo.git">
+        </div>
+        <button class="btn" onclick="setRemote()">Set Remote</button>
+        <button class="btn" onclick="enableSync()">Enable Auto-Sync</button>
+        <button class="btn" onclick="disableSync()">Disable Auto-Sync</button>
+      </div>
+      
+      <div class="card">
+        <h2>Manual Sync</h2>
+        <button class="btn" onclick="syncNow()">Sync Now</button>
+        <button class="btn" onclick="pullChanges()">Pull</button>
+        <button class="btn" onclick="pushChanges()">Push</button>
+      </div>
+      
+      <div class="card">
+        <h2>Sync Status</h2>
+        <div id="syncStatus"></div>
+      </div>
+    </div>
+
+    <div id="status" class="section">
+      <div class="card">
+        <h2>System Status</h2>
+        <div id="systemStatus"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector(`button[onclick="showSection('${id}')"]`).classList.add('active');
+      loadData(id);
+    }
+
+    async function api(method, path, body) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(API + path, opts);
+      return res.json();
+    }
+
+    async function loadData(section) {
+      if (section === 'agents') loadAgents();
+      if (section === 'mcp') loadMCP();
+      if (section === 'skills') loadSkills();
+      if (section === 'plugins') loadPlugins();
+      if (section === 'sessions') loadSessions();
+      if (section === 'sync') loadSyncStatus();
+      if (section === 'status') loadSystemStatus();
+    }
+
+    async function loadAgents() {
+      const data = await api('GET', '/api/agents');
+      const html = data.agents?.map(a => `
+        <div class="item">
+          <h3>${a.name}</h3>
+          <p class="meta">Mode: ${a.mode}</p>
+          <p>Permissions: ${a.permissions?.length || 0} rules</p>
+          <button class="btn danger small" onclick="deleteAgent('${a.name}')">Delete</button>
+        </div>
+      `).join('') || '<p>No agents found</p>';
+      document.getElementById('agentsList').innerHTML = html;
+    }
+
+    async function createAgent() {
+      const result = await api('POST', '/api/agents', {
+        name: document.getElementById('agentName').value,
+        description: document.getElementById('agentDesc').value,
+        mode: document.getElementById('agentMode').value,
+        tools: document.getElementById('agentTools').value
+      });
+      alert(result.success ? 'Agent created!' : result.error);
+      loadAgents();
+    }
+
+    async function deleteAgent(name) {
+      if (!confirm('Delete agent: ' + name + '?')) return;
+      await api('DELETE', '/api/agents/' + name);
+      loadAgents();
+    }
+
+    async function loadMCP() {
+      const data = await api('GET', '/api/mcp');
+      const html = data.stored?.map(m => `
+        <div class="item">
+          <h3>${m.name}</h3>
+          <p class="meta">Type: ${m.type}</p>
+          <p>${m.command}</p>
+          <button class="btn danger small" onclick="deleteMCP('${m.name}')">Remove</button>
+        </div>
+      `).join('') || '<p>No MCP servers</p>';
+      document.getElementById('mcpList').innerHTML = html;
+    }
+
+    async function addMCP() {
+      const result = await api('POST', '/api/mcp', {
+        name: document.getElementById('mcpName').value,
+        type: document.getElementById('mcpType').value,
+        command: document.getElementById('mcpCommand').value
+      });
+      alert(result.success ? 'MCP server added!' : result.error);
+      loadMCP();
+    }
+
+    async function deleteMCP(name) {
+      await api('DELETE', '/api/mcp/' + name);
+      loadMCP();
+    }
+
+    async function loadSkills() {
+      const data = await api('GET', '/api/skills');
+      const html = data.stored?.map(s => `
+        <div class="item">
+          <h3>${s.name || s}</h3>
+          <p class="meta">Added: ${s.addedAt || 'unknown'}</p>
+          <button class="btn danger small" onclick="deleteSkill('${s.name || s}')">Remove</button>
+        </div>
+      `).join('') || '<p>No skills</p>';
+      document.getElementById('skillsList').innerHTML = html;
+    }
+
+    async function addSkill() {
+      const result = await api('POST', '/api/skills', {
+        name: document.getElementById('skillName').value,
+        path: document.getElementById('skillPath').value
+      });
+      alert(result.success ? 'Skill added!' : result.error);
+      loadSkills();
+    }
+
+    async function deleteSkill(name) {
+      await api('DELETE', '/api/skills/' + name);
+      loadSkills();
+    }
+
+    async function loadPlugins() {
+      const data = await api('GET', '/api/plugins');
+      const html = data.stored?.map(p => `
+        <div class="item">
+          <h3>${p.module}</h3>
+          <p class="meta">Global: ${p.global ? 'Yes' : 'No'}</p>
+          <button class="btn danger small" onclick="deletePlugin('${p.module}')">Uninstall</button>
+        </div>
+      `).join('') || '<p>No plugins</p>';
+      document.getElementById('pluginsList').innerHTML = html;
+    }
+
+    async function addPlugin() {
+      const result = await api('POST', '/api/plugins', {
+        module: document.getElementById('pluginModule').value,
+        global: document.getElementById('pluginGlobal').checked
+      });
+      alert(result.success ? 'Plugin installed!' : result.error);
+      loadPlugins();
+    }
+
+    async function deletePlugin(module) {
+      await api('DELETE', '/api/plugins/' + module);
+      loadPlugins();
+    }
+
+    async function loadSessions() {
+      const data = await api('GET', '/api/sessions');
+      const html = data.sessions?.map(s => `
+        <div class="item">
+          <h3>${s.title || s.id}</h3>
+          <p class="meta">ID: ${s.id}</p>
+          <button class="btn small" onclick="exportSession('${s.id}')">Export</button>
+        </div>
+      `).join('') || '<p>No sessions</p>';
+      document.getElementById('sessionsList').innerHTML = html;
+    }
+
+    async function syncAllSessions() {
+      const result = await api('POST', '/api/sessions/sync-all');
+      alert(result.success ? `Synced ${result.count} sessions` : result.error);
+      loadSessions();
+    }
+
+    async function exportAllSessions() {
+      const data = await api('GET', '/api/sessions');
+      for (const s of data.sessions || []) {
+        await api('POST', '/api/sessions/export/' + s.id);
+      }
+      alert('All sessions exported!');
+    }
+
+    async function exportSession(id) {
+      const result = await api('POST', '/api/sessions/export/' + id);
+      alert(result.success ? 'Session exported!' : result.error);
+    }
+
+    async function loadSyncStatus() {
+      const data = await api('GET', '/api/sync/status');
+      document.getElementById('syncStatus').innerHTML = `
+        <div class="status ${data.enabled ? 'success' : 'info'}">
+          <p><strong>Enabled:</strong> ${data.enabled ? 'Yes' : 'No'}</p>
+          <p><strong>Initialized:</strong> ${data.initialized ? 'Yes' : 'No'}</p>
+          <p><strong>Remote:</strong> ${data.remote || 'Not set'}</p>
+          <p><strong>Branch:</strong> ${data.branch || 'N/A'}</p>
+        </div>
+      `;
+    }
+
+    async function setRemote() {
+      const result = await api('POST', '/api/sync/remote', { url: document.getElementById('remoteUrl').value });
+      alert(result.success ? 'Remote set!' : result.error);
+      loadSyncStatus();
+    }
+
+    async function enableSync() {
+      const result = await api('POST', '/api/sync/enable', { remote: document.getElementById('remoteUrl').value });
+      alert(result.message || result.success ? 'Enabled!' : result.error);
+      loadSyncStatus();
+    }
+
+    async function disableSync() {
+      const result = await api('POST', '/api/sync/disable');
+      alert(result.success ? 'Disabled!' : result.error);
+      loadSyncStatus();
+    }
+
+    async function syncNow() {
+      const result = await api('POST', '/api/sync/sync');
+      alert(result.success ? 'Synced!' : result.error);
+      loadSyncStatus();
+    }
+
+    async function pullChanges() {
+      const result = await api('POST', '/api/sync/pull');
+      alert(result.success ? 'Pulled!' : result.error);
+      loadSyncStatus();
+    }
+
+    async function pushChanges() {
+      const result = await api('POST', '/api/sync/push');
+      alert(result.success ? 'Pushed!' : result.error);
+      loadSyncStatus();
+    }
+
+    async function loadSystemStatus() {
+      const agents = await api('GET', '/api/agents');
+      const mcp = await api('GET', '/api/mcp');
+      const skills = await api('GET', '/api/skills');
+      const plugins = await api('GET', '/api/plugins');
+      const sessions = await api('GET', '/api/sessions');
+      const sync = await api('GET', '/api/sync/status');
+      
+      document.getElementById('systemStatus').innerHTML = `
+        <div class="status info">
+          <p><strong>Agents:</strong> ${agents.agents?.length || 0}</p>
+          <p><strong>MCP Servers:</strong> ${mcp.stored?.length || 0}</p>
+          <p><strong>Skills:</strong> ${skills.stored?.length || 0}</p>
+          <p><strong>Plugins:</strong> ${plugins.stored?.length || 0}</p>
+          <p><strong>Sessions:</strong> ${sessions.sessions?.length || 0}</p>
+          <p><strong>Git Sync:</strong> ${sync.enabled ? 'Enabled' : 'Disabled'}</p>
+        </div>
+      `;
+    }
+
+    loadAgents();
+  </script>
+</body>
+</html>

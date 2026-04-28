@@ -1,0 +1,18 @@
+{
+  "name": "opencode-manager",
+  "version": "1.0.0",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js"
+  },
+  "keywords": ["opencode", "agent", "manager"],
+  "author": "",
+  "license": "ISC",
+  "description": "OpenCode Agent Manager - Sync agents, skills, MCP, plugins across computers",
+  "dependencies": {
+    "express": "^4.18.2",
+    "chokidar": "^3.5.3",
+    "simple-git": "^3.22.0"
+  }
+}

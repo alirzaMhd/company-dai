@@ -1,0 +1,2 @@
+# Place OpenCode database copy here for sync
+# Run: cp ~/.local/share/opencode/opencode.db ./data/database/
