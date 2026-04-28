@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /content/opencode-sync
+cd /content/company-dai/
 
 # Start the server in background
 node src/server.js &
