@@ -6,9 +6,8 @@ const { syncNow } = require('../lib/git-sync');
 
 router.get('/', async (req, res) => {
   try {
-    const agents = await getAgents();
     const stored = await readJSON(getDataPath('agents.json')) || [];
-    res.json({ agents, stored });
+    res.json(stored);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
