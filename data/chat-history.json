@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": "1777374903000",
+    "message": "hi baby",
+    "mentions": [],
+    "issues": [],
+    "action": null,
+    "response": "I understand you're trying to communicate with the agents. Try commands like \"Assign issue #123 to @Agent-Name\" or \"What's the status of issue #456?\"",
+    "timestamp": "2026-04-28T11:15:03.000Z"
+  }
+]

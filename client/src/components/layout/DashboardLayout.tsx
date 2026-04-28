@@ -7,7 +7,13 @@ import {
   AlertCircle,
   Settings,
   Menu,
-  X
+  X,
+  Wrench,
+  Server,
+  Puzzle,
+  FileJson,
+  GitBranch,
+  ListTodo,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '../../lib/utils'
@@ -18,6 +24,12 @@ const navigation = [
   { name: 'Projects', href: '/projects', icon: FolderKanban },
   { name: 'Chat', href: '/chat', icon: MessageSquare },
   { name: 'Issues', href: '/issues', icon: AlertCircle },
+  { name: 'Tasks', href: '/tasks', icon: ListTodo },
+  { name: 'Skills', href: '/skills', icon: Wrench },
+  { name: 'MCP', href: '/mcp', icon: Server },
+  { name: 'Plugins', href: '/plugins', icon: Puzzle },
+  { name: 'Sessions', href: '/sessions', icon: FileJson },
+  { name: 'Sync', href: '/sync', icon: GitBranch },
 ]
 
 export default function DashboardLayout() {

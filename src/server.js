@@ -12,6 +12,7 @@ const statusRoutes = require('./routes/status');
 const projectRoutes = require('./routes/projects');
 const chatRoutes = require('./routes/chat');
 const issuesRoutes = require('./routes/issues');
+const taskRoutes = require('./routes/tasks');
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -30,6 +31,7 @@ app.use('/api/status', statusRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/issues', issuesRoutes);
+app.use('/api/tasks', taskRoutes);
 
 app.get('/api', (req, res) => {
   res.json({ 
