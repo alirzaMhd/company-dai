@@ -18,9 +18,8 @@ const app = express();
 const PORT = process.env.PORT || 3100;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
-app.use(express.static(path.join(__dirname, '../client/dist')));
 
+// API routes
 app.use('/api/agents', agentRoutes);
 app.use('/api/mcp', mcpRoutes);
 app.use('/api/skills', skillRoutes);
@@ -45,9 +44,14 @@ app.get('/api', (req, res) => {
   });
 });
 
+// Serve React SPA build in production
+const distPath = path.join(__dirname, '../dist');
+app.use(express.static(distPath));
+
+// SPA fallback - serve index.html for all non-API routes
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    res.sendFile(path.join(distPath, 'index.html'));
   }
 });
 
