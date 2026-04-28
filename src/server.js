@@ -44,14 +44,22 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Serve React SPA build in production
-const distPath = path.join(__dirname, '../dist');
+// Serve static files from dist
+const distPath = path.join(__dirname, '..', 'dist');
+
+// Serve static assets (JS, CSS, images, etc.)
 app.use(express.static(distPath));
 
-// SPA fallback - serve index.html for all non-API routes
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(distPath, 'index.html'));
+// SPA fallback - serve index.html for all non-API routes that don't match static files
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api') && !path.extname(req.path)) {
+    res.sendFile(path.join(distPath, 'index.html'), (err) => {
+      if (err) {
+        next();
+      }
+    });
+  } else {
+    next();
   }
 });
 
