@@ -43,6 +43,12 @@ app.get('/api', (req, res) => {
   });
 });
 
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  }
+});
+
 async function start() {
   console.log('Initializing OpenCode Manager...');
   
