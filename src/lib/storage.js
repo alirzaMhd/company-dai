@@ -62,4 +62,14 @@ async function writeJSON(filePath, data) {
   await fs.writeFile(filePath, JSON.stringify(data, null, 2));
 }
 
-module.exports = { initStorage, getDataPath, readJSON, writeJSON, DATA_DIR };
+async function readData(fileName) {
+  const filePath = path.join(DATA_DIR, fileName);
+  return readJSON(filePath);
+}
+
+async function writeData(fileName, data) {
+  const filePath = path.join(DATA_DIR, fileName);
+  return writeJSON(filePath, data);
+}
+
+module.exports = { initStorage, getDataPath, readJSON, writeJSON, readData, writeData, DATA_DIR };
