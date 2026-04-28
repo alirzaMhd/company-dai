@@ -1,6 +1,24 @@
 #!/bin/bash
 cd /content/company-dai/
 
+# Kill any existing process on port 3100
+if lsof -Pi :3100 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "Port 3100 is in use, killing existing process..."
+    kill $(lsof -t -i:3100) 2>/dev/null
+    sleep 1
+fi
+
+# Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+    echo "Installing root dependencies..."
+    npm install
+fi
+
+if [ ! -d "client/node_modules" ]; then
+    echo "Installing client dependencies..."
+    cd client && npm install && cd ..
+fi
+
 # Function to cleanup on exit
 cleanup() {
     echo "Shutting down..."
@@ -57,7 +75,7 @@ else
     # Build the React app if needed
     if [ ! -d "client/dist" ] || [ "$1" == "build" ]; then
         echo "Building React app..."
-        cd client && npm run build && cd ..
+        cd client && npm install && npm run build && cd ..
         if [ $? -ne 0 ]; then
             echo "Error: Failed to build React app"
             exit 1
