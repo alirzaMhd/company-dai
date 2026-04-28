@@ -5,13 +5,14 @@ cd /content/company-dai/
 cleanup() {
     echo "Shutting down..."
     kill $SERVER_PID 2>/dev/null
+    kill $DEV_PID 2>/dev/null
     kill $TUNNEL_PID 2>/dev/null
     exit 0
 }
 trap cleanup EXIT INT TERM
 
 # Check if we should run in dev mode
-if [ "$1" == "dev" ]; then
+if [ "$1" == "dev" ] || [ "$1" == "everything" ]; then
     echo "Starting in DEVELOPMENT mode..."
     
     # Start backend server
@@ -31,6 +32,23 @@ if [ "$1" == "dev" ]; then
     cd client && npm run dev &
     DEV_PID=$!
     echo "Vite dev server started with PID: $DEV_PID"
+    
+    echo ""
+    echo "✓ Application running at http://localhost:3100"
+    echo "✓ Dev server running at http://localhost:5173"
+    
+    if [ "$1" == "everything" ]; then
+        sleep 2
+        
+        # Start Cloudflare tunnel
+        cloudflared tunnel --url http://localhost:3100 &
+        TUNNEL_PID=$!
+        echo "Tunnel started with PID: $TUNNEL_PID"
+        
+        echo ""
+        echo "✓ Application running at http://localhost:3100"
+        echo "✓ Dev server running at http://localhost:5173"
+    fi
     
     wait
 else
