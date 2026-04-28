@@ -11,7 +11,7 @@ const syncRoutes = require('./routes/sync');
 const statusRoutes = require('./routes/status');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3100;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
