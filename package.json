@@ -10,11 +10,17 @@
     "db:generate": "pnpm -F @company-dai/db db:generate",
     "db:migrate": "pnpm -F @company-dai/db db:migrate"
   },
-  "keywords": ["opencode", "agent", "manager", "paperclip"],
+  "keywords": [
+    "opencode",
+    "agent",
+    "manager",
+    "paperclip"
+  ],
   "author": "",
   "license": "ISC",
   "description": "Company-dai - Paperclip-style AI company control plane",
   "devDependencies": {
+    "@tailwindcss/vite": "^4.2.4",
     "concurrently": "^9.1.2",
     "typescript": "^5.6.3"
   }

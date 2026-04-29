@@ -9,6 +9,11 @@ export default defineConfig(({ mode }) => ({
   build: {
     minify: "esbuild",
   },
+  // Enable Rolldown for 5-8x faster production builds
+  // Rolldown is Rust-based and replaces Rollup
+  experimental: {
+    bundler: "rolldown",
+  },
   esbuild:
     mode === "production"
       ? {
