@@ -140,7 +140,8 @@ router.get('/:companyId/adapters/:type/models', async (req, res) => {
   try {
     const { companyId, type } = req.params;
     console.log("[DEBUG] adapter-models:", { companyId, type });
-    const models = getMockModelsByType(type);
+    const normalizedType = type.replace(/_/g, '-');
+    const models = getMockModelsByType(normalizedType);
     res.json(models);
   } catch (error) {
     res.status(500).json({ error: error.message });
