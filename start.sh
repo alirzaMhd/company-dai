@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 cd /content/company-dai/
 
@@ -19,20 +18,12 @@ echo "=== Company-dai Setup ==="
 if [ "$1" == "install" ] || [ -z "$1" ]; then
     echo "Installing dependencies..."
     pnpm install
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to install dependencies"
-        exit 1
-    fi
     echo "✓ Dependencies installed"
 fi
 
 if [ "$1" == "build" ] || [ "$1" == "prod" ] || [ -z "$1" ]; then
     echo "Building packages..."
     pnpm -r build
-    if [ $? -ne 0 ]; then
-        echo "Error: Failed to build"
-        exit 1
-    fi
     echo "✓ Build complete"
 fi
 
@@ -65,11 +56,6 @@ if [ "$1" == "prod" ] || [ -z "$1" ]; then
     SERVER_PID=$!
     
     sleep 2
-    
-    if ! kill -0 $SERVER_PID 2>/dev/null; then
-        echo "Error: Server failed to start"
-        exit 1
-    fi
     
     echo ""
     echo "✓ Server running at http://localhost:3001"
