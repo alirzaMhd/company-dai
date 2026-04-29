@@ -14,7 +14,7 @@ import { api } from "./client";
 export type CompanyStats = Record<string, { agentCount: number; issueCount: number }>;
 
 export const companiesApi = {
-  list: () => api.get<Company[]>("/companies"),
+  list: () => api.get<{ companies: Company[] }>("/companies").then((res) => res.companies),
   get: (companyId: string) => api.get<Company>(`/companies/${companyId}`),
   stats: () => api.get<CompanyStats>("/companies/stats"),
   create: (data: {
