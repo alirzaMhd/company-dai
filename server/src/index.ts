@@ -41,22 +41,6 @@ import executionWorkspacesRouter from './routes/execution-workspaces.js';
 import cliAuthRouter from './routes/cli-auth.js';
 import adaptersRouter from './routes/adapters.js';
 import invitesRouter from './routes/invites.js';
-// NEW: Missing routes from plan-ui.md
-import accessRouter from './routes/access.js';
-import authzRouter from './routes/authz.js';
-import healthRouter from './routes/health.js';
-import llmsRouter from './routes/llms.js';
-import instanceSettingsRouter from './routes/instance-settings.js';
-import issuesCheckoutWakeupRouter from './routes/issues-checkout-wakeup.js';
-import crmRouter from './routes/crm.js';
-import inboxDismissalsRouter from './routes/inbox-dismissals.js';
-import userProfilesRouter from './routes/user-profiles.js';
-import sidebarBadgesRouter from './routes/sidebar-badges.js';
-import sidebarPreferencesRouter from './routes/sidebar-preferences.js';
-import orgChartSvgRouter from './routes/org-chart-svg.js';
-import pluginUiStaticRouter from './routes/plugin-ui-static.js';
-import workspaceCommandAuthzRouter from './routes/workspace-command-authz.js';
-import workspaceRuntimeServiceAuthzRouter from './routes/workspace-runtime-service-authz.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -70,6 +54,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/companies', companiesRouter);
+app.use('/api/companies', adaptersRouter);
 app.use('/api/companies', goalsRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/issues', issuesRouter);
@@ -101,7 +86,6 @@ app.use('/api/documents', documentsRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/execution-workspaces', executionWorkspacesRouter);
 app.use('/api/cli-auth', cliAuthRouter);
-app.use('/api/adapters', adaptersRouter);
 app.use('/api/invites', invitesRouter);
 // NEW: Missing routes from plan-ui.md
 app.use('/api/access', accessRouter);
