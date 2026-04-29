@@ -15,6 +15,7 @@ import Routines from './pages/Routines';
 import Settings from './pages/Settings';
 import Assets from './pages/Assets';
 import Inbox from './pages/Inbox';
+import Live from './pages/Live';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="assets" element={<Assets />} />
         <Route path="inbox" element={<Inbox />} />
+        <Route path="live" element={<Live />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

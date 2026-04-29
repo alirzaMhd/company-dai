@@ -29,6 +29,9 @@ import eventsRouter from './routes/events.js';
 import interactionsRouter from './routes/interactions.js';
 import companyPortabilityRouter from './routes/company-portability.js';
 import documentsRouter from './routes/documents.js';
+import githubRouter from './routes/github.js';
+import executionWorkspacesRouter from './routes/execution-workspaces.js';
+import cliAuthRouter from './routes/cli-auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -69,6 +72,9 @@ app.use('/api/interactions', interactionsRouter);
 app.use('/api/companies/:id/export', companyPortabilityRouter);
 app.use('/api/companies/:id/import', companyPortabilityRouter);
 app.use('/api/documents', documentsRouter);
+app.use('/api/github', githubRouter);
+app.use('/api/execution-workspaces', executionWorkspacesRouter);
+app.use('/api/cli-auth', cliAuthRouter);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
