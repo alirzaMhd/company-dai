@@ -68,13 +68,13 @@ export function GoalDetail() {
   const { data: allGoals } = useQuery({
     queryKey: queryKeys.goals.list(resolvedCompanyId!),
     queryFn: () => goalsApi.list(resolvedCompanyId!),
-    enabled: !!resolvedCompanyId
+    enabled: Boolean(resolvedCompanyId)
   });
 
   const { data: allProjects } = useQuery({
     queryKey: queryKeys.projects.list(resolvedCompanyId!),
     queryFn: () => projectsApi.list(resolvedCompanyId!),
-    enabled: !!resolvedCompanyId
+    enabled: Boolean(resolvedCompanyId)
   });
 
   useEffect(() => {

@@ -55,7 +55,7 @@ export function NewGoalDialog() {
   const { data: goals } = useQuery({
     queryKey: queryKeys.goals.list(selectedCompanyId!),
     queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && newGoalOpen,
+    enabled: Boolean(selectedCompanyId) && newGoalOpen,
   });
 
   const createGoal = useMutation({

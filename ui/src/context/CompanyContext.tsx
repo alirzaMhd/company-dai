@@ -74,6 +74,21 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, next);
   }, [companies, selectedCompanyId, sidebarCompanies]);
 
+  // Ensure selectedCompanyId is never null after initialization
+  useEffect(() => {
+    if (selectedCompanyId === null && companies.length > 0) {
+      const selectableCompanies = sidebarCompanies.length > 0 ? sidebarCompanies : companies;
+      const stored = localStorage.getItem(STORAGE_KEY);
+      const next = stored && selectableCompanies.some((c) => c.id === stored)
+        ? stored
+        : selectableCompanies[0]?.id;
+      if (next) {
+        setSelectedCompanyIdState(next);
+        localStorage.setItem(STORAGE_KEY, next);
+      }
+    }
+  }, [selectedCompanyId, companies, sidebarCompanies]);
+
   const setSelectedCompanyId = useCallback((companyId: string, options?: CompanySelectionOptions) => {
     setSelectedCompanyIdState(companyId);
     setSelectionSource(options?.source ?? "manual");

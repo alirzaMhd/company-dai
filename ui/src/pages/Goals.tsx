@@ -23,7 +23,7 @@ export function Goals() {
   const { data: goals, isLoading, error } = useQuery({
     queryKey: queryKeys.goals.list(selectedCompanyId!),
     queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    enabled: Boolean(selectedCompanyId),
   });
 
   if (!selectedCompanyId) {

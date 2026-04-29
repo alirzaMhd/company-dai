@@ -41,6 +41,22 @@ import executionWorkspacesRouter from './routes/execution-workspaces.js';
 import cliAuthRouter from './routes/cli-auth.js';
 import adaptersRouter from './routes/adapters.js';
 import invitesRouter from './routes/invites.js';
+// NEW: Missing routes from plan-ui.md
+import accessRouter from './routes/access.js';
+import authzRouter from './routes/authz.js';
+import healthRouter from './routes/health.js';
+import llmsRouter from './routes/llms.js';
+import instanceSettingsRouter from './routes/instance-settings.js';
+import issuesCheckoutWakeupRouter from './routes/issues-checkout-wakeup.js';
+import crmRouter from './routes/crm.js';
+import inboxDismissalsRouter from './routes/inbox-dismissals.js';
+import userProfilesRouter from './routes/user-profiles.js';
+import sidebarBadgesRouter from './routes/sidebar-badges.js';
+import sidebarPreferencesRouter from './routes/sidebar-preferences.js';
+import orgChartSvgRouter from './routes/org-chart-svg.js';
+import pluginUiStaticRouter from './routes/plugin-ui-static.js';
+import workspaceCommandAuthzRouter from './routes/workspace-command-authz.js';
+import workspaceRuntimeServiceAuthzRouter from './routes/workspace-runtime-service-authz.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -87,6 +103,22 @@ app.use('/api/execution-workspaces', executionWorkspacesRouter);
 app.use('/api/cli-auth', cliAuthRouter);
 app.use('/api/adapters', adaptersRouter);
 app.use('/api/invites', invitesRouter);
+// NEW: Missing routes from plan-ui.md
+app.use('/api/access', accessRouter);
+app.use('/api/authz', authzRouter);
+app.use('/api/health', healthRouter);
+app.use('/api/llms', llmsRouter);
+app.use('/api/instance-settings', instanceSettingsRouter);
+app.use('/api/issues-checkout-wakeup', issuesCheckoutWakeupRouter);
+app.use('/api/crm', crmRouter);
+app.use('/api/inbox-dismissals', inboxDismissalsRouter);
+app.use('/api/user-profiles', userProfilesRouter);
+app.use('/api/sidebar-badges', sidebarBadgesRouter);
+app.use('/api/sidebar-preferences', sidebarPreferencesRouter);
+app.use('/api/org-chart-svg', orgChartSvgRouter);
+app.use('/api/plugin-ui-static', pluginUiStaticRouter);
+app.use('/api/workspace-command-authz', workspaceCommandAuthzRouter);
+app.use('/api/workspace-runtime-service-authz', workspaceRuntimeServiceAuthzRouter);
 
 // Serve static files from dist
 app.use(express.static(distPath));

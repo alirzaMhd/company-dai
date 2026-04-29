@@ -241,7 +241,7 @@ export function ProjectProperties({ project, onUpdate, onFieldUpdate, getFieldSa
   const { data: allGoals } = useQuery({
     queryKey: queryKeys.goals.list(selectedCompanyId!),
     queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    enabled: Boolean(selectedCompanyId),
   });
   const { data: experimentalSettings } = useQuery({
     queryKey: queryKeys.instance.experimentalSettings,

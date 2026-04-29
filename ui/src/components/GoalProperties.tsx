@@ -76,13 +76,13 @@ export function GoalProperties({ goal, onUpdate }: GoalPropertiesProps) {
   const { data: agents } = useQuery({
     queryKey: queryKeys.agents.list(selectedCompanyId!),
     queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    enabled: Boolean(selectedCompanyId),
   });
 
   const { data: allGoals } = useQuery({
     queryKey: queryKeys.goals.list(selectedCompanyId!),
     queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId,
+    enabled: Boolean(selectedCompanyId),
   });
 
   const ownerAgent = goal.ownerAgentId

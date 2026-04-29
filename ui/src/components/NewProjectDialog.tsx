@@ -68,19 +68,19 @@ export function NewProjectDialog() {
   const { data: goals } = useQuery({
     queryKey: queryKeys.goals.list(selectedCompanyId!),
     queryFn: () => goalsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && newProjectOpen,
+    enabled: Boolean(selectedCompanyId) && newProjectOpen,
   });
 
   const { data: agents } = useQuery({
     queryKey: queryKeys.agents.list(selectedCompanyId!),
     queryFn: () => agentsApi.list(selectedCompanyId!),
-    enabled: !!selectedCompanyId && newProjectOpen,
+    enabled: Boolean(selectedCompanyId) && newProjectOpen,
   });
 
   const { data: companyMembers } = useQuery({
     queryKey: queryKeys.access.companyUserDirectory(selectedCompanyId!),
     queryFn: () => accessApi.listUserDirectory(selectedCompanyId!),
-    enabled: !!selectedCompanyId && newProjectOpen,
+    enabled: Boolean(selectedCompanyId) && newProjectOpen,
   });
 
   const mentionOptions = useMemo<MentionOption[]>(() => {
