@@ -7,6 +7,18 @@ export class ClaudeLocalAdapter implements AgentAdapter {
 
   constructor(public config: AgentConfig) {}
 
+  async listModels(): Promise<{ id: string; label: string }[]> {
+    return [
+      { id: 'claude-sonnet-4-5-20250514', label: 'Claude Sonnet 4 (May 14, 2025)' },
+      { id: 'claude-opus-4-5-20250514', label: 'Claude Opus 4 (May 14, 2025)' },
+      { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Oct 22, 2024)' },
+      { id: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku (Oct 22, 2024)' },
+      { id: 'claude-3-opus-20240229', label: 'Claude 3 Opus (Feb 29, 2024)' },
+      { id: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet (Feb 29, 2024)' },
+      { id: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku (Mar 7, 2024)' },
+    ];
+  }
+
   async execute(context: RunContext): Promise<RunResult> {
     const startTime = Date.now();
     

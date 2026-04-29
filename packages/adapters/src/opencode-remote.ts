@@ -7,6 +7,51 @@ export class OpenCodeRemoteAdapter implements AgentAdapter {
 
   constructor(public config: AgentConfig) {}
 
+  async listModels(): Promise<{ id: string; label: string }[]> {
+    if (!this.config.command) {
+      return [];
+    }
+
+    return new Promise((resolve) => {
+      try {
+        const ws = new WebSocket(this.config.command!, {
+          headers: {
+            'Authorization': `Bearer ${this.config.env?.['API_KEY'] || ''}`
+          }
+        });
+
+        const timeout = setTimeout(() => {
+          ws.close();
+          resolve([]);
+        }, 10000);
+
+        ws.on('message', (data) => {
+          try {
+            const message = JSON.parse(data.toString());
+            if (message.type === 'models') {
+              clearTimeout(timeout);
+              ws.close();
+              resolve(message.models || []);
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        });
+
+        ws.on('error', () => {
+          clearTimeout(timeout);
+          resolve([]);
+        });
+
+        ws.on('open', () => {
+          ws.send(JSON.stringify({ type: 'models' }));
+        });
+      } catch {
+        resolve([]);
+      }
+    });
+  }
+
   async execute(context: RunContext): Promise<RunResult> {
     const startTime = Date.now();
 
