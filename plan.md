@@ -225,6 +225,7 @@ Create Paperclip-style pages:
 | Companies | Company list/management |
 | Org Chart | Visual agent hierarchy |
 | Agents | Agent list, create, manage |
+| Agent Detail | Agent config, runs, settings |
 | Goals | Goal hierarchy view |
 | Projects | Project management |
 | Issues | Task board/list |
@@ -232,6 +233,9 @@ Create Paperclip-style pages:
 | Approvals | Pending approvals |
 | Costs | Budget tracking |
 | Routines | Scheduled tasks |
+| Settings | Instance settings |
+| Settings → Adapters | Global adapter configuration |
+| Settings → Agents | All agents management |
 | Assets | Asset library |
 | Inbox | Notifications |
 | Join Requests | Join request queue |
@@ -266,6 +270,7 @@ Build reusable UI:
 /org                 → Org chart
 /agents               → Agents list
 /agents/:id           → Agent detail
+/agents/:id/config    → Agent configuration
 /goals               → Goals tree
 /projects            → Projects
 /projects/:id         → Project detail
@@ -280,7 +285,10 @@ Build reusable UI:
 /preferences        → User preferences
 /backups            → Database backups
 /llms               → LLM configuration
-/settings           → Settings
+/settings           → Settings (general)
+/settings/adapters   → Adapter settings (global)
+/settings/agents     → All agents management
+/live               → Live run view
 ```
 
 ---
@@ -299,6 +307,16 @@ interface AgentAdapter {
   detectModel?(): string;
   getCapabilities?(): string[];
 }
+
+interface AgentConfig {
+  adapterType: string;           // "opencode-local", "claude-local", etc.
+  command?: string;             // CLI command/path
+  args?: string[];             // CLI arguments
+  env?: Record<string, string>; // Environment variables
+  model?: string;              // Model to use
+  timeout?: number;            // Execution timeout
+  maxRetries?: number;         // Retry count
+}
 ```
 
 ### 5.2 Built-in Adapters
@@ -308,6 +326,7 @@ Implement:
 | Adapter | Type | Description |
 |---------|------|------------|
 | opencode-local | process | Local OpenCode process |
+| opencode-remote | websocket | OpenCode remote (websocket) |
 | claude-local | process | Claude Code CLI |
 | codex-local | process | Codex CLI |
 | cursor-local | process | Cursor CLI |
@@ -317,11 +336,97 @@ Implement:
 | openrouter | http | OpenRouter API |
 | http | webhook | External HTTP agent |
 
-### 5.3 Adapter Configuration
+### 5.3 Global Adapter Settings
+
+**Settings Page: `/settings` → Adapter Settings Tab**
+
+```
+Global Adapter Configuration:
+├── OpenCode Settings
+│   ├── Remote URL (default: "wss://api.opencode.com")
+│   ├── API Key / Auth Token
+│   ├── WebSocket Timeout
+│   └── Apply to All Agents button
+├── Claude CLI Settings
+│   ├── CLI Path (auto-detect or custom)
+│   ├── Default Model (claude-3-5-sonnet)
+│   └── Apply to All Agents button
+├── Codex CLI Settings
+│   ├── CLI Path
+│   └── Apply to All Agents button
+└── [other adapters...]
+```
+
+**Features:**
+- Change setting once, applies to ALL agents across ALL companies
+- Per-agent overrides still work
+- Export/import global settings
+- Settings migration on change
+
+### 5.4 Per-Agent Adapter Configuration
+
+**Agent Page: `/agents/:id` → Configuration Tab**
+
+```
+Agent Adapter Settings:
+├── Adapter Type: [dropdown]
+│   ├── opencode-local
+│   ├── opencode-remote
+│   ├── claude-local
+│   └── ...
+├── Configuration (varies by type)
+│   ├── Command/Path
+│   ├── Arguments
+│   ├── Environment Variables
+│   └── Model (if applicable)
+├── Advanced
+│   ├── Timeout (ms)
+│   ├── Max Retries
+│   └── Custom env vars
+└── [Override Global] checkbox
+   - When checked, uses these values instead of global
+```
+
+### 5.5 Agent Management in Settings
+
+**Settings Page: `/settings` → Agents Tab**
+
+```
+All Agents Management:
+├── Filters
+│   ├── Company dropdown
+│   ├── Status (active, paused, terminated)
+│   └── Search by name/key
+├── Agent List Table
+│   ├── Name
+│   ├── Key
+│   ├── Company
+│   ├── Status
+│   ├── Current Cost
+│   ├── Last Run
+│   └── Actions
+├── Bulk Actions
+│   ├── Pause Selected
+│   ├── Resume Selected
+│   ├── Update Adapter
+│   └── Delete Selected
+├── Create Agent button
+└── Export/Import agents
+```
+
+**Features:**
+- View all agents across all companies
+- Filter by company, status
+- Bulk pause/resume/update
+- Agent health monitoring
+- Cost tracking per agent
+- Create new agent inline
+
+### 5.6 Adapter Configuration
 
 UI for configuring adapters per agent type with env injection.
 
-### 5.4 Adapter Plugins
+### 5.7 Adapter Plugins
 
 Support plugin-based adapters:
 - External adapter discovery
