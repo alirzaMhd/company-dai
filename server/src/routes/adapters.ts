@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { listAdapterModels } from '@company-dai/adapters';
 
 const router = Router();
 
@@ -141,7 +142,7 @@ router.get('/:companyId/adapters/:type/models', async (req, res) => {
     const { companyId, type } = req.params;
     console.log("[DEBUG] adapter-models:", { companyId, type });
     const normalizedType = type.replace(/_/g, '-');
-    const models = getMockModelsByType(normalizedType);
+    const models = await listAdapterModels(normalizedType, req.body);
     res.json(models);
   } catch (error) {
     res.status(500).json({ error: error.message });

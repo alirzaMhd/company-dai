@@ -160,6 +160,12 @@ importers:
 
   server:
     dependencies:
+      '@company-dai/adapter-utils':
+        specifier: workspace:*
+        version: link:../packages/adapter-utils
+      '@company-dai/adapters':
+        specifier: workspace:*
+        version: link:../packages/adapters
       '@company-dai/db':
         specifier: workspace:*
         version: link:../packages/db

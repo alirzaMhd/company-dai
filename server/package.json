@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@company-dai/adapters": "workspace:*",
+    "@company-dai/adapter-utils": "workspace:*",
     "@company-dai/db": "workspace:*",
     "@company-dai/shared": "workspace:*",
     "express": "^4.18.2",

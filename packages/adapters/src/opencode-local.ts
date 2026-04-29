@@ -7,6 +7,45 @@ export class OpenCodeLocalAdapter implements AgentAdapter {
 
   constructor(public config: AgentConfig) {}
 
+  async listModels(): Promise<{ id: string; label: string }[]> {
+    return new Promise((resolve) => {
+      const args = ['models'];
+      const child = spawn(this.config.command || 'opencode', args, {
+        timeout: 30000
+      });
+
+      let output = '';
+
+      child.stdout?.on('data', (data) => {
+        output += data.toString();
+      });
+
+      child.stderr?.on('data', (data) => {
+        output += data.toString();
+      });
+
+      child.on('close', () => {
+        const models: { id: string; label: string }[] = [];
+        for (const line of output.trim().split('\n')) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          if (trimmed.startsWith('opencode/') || trimmed.startsWith('/')) {
+            const modelId = trimmed.includes('/') 
+              ? trimmed 
+              : trimmed;
+            const label = modelId.split('/').pop() || modelId;
+            models.push({ id: modelId, label });
+          }
+        }
+        resolve(models);
+      });
+
+      child.on('error', () => {
+        resolve([]);
+      });
+    });
+  }
+
   async execute(context: RunContext): Promise<RunResult> {
     const startTime = Date.now();
     
