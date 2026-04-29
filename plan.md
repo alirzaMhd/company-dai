@@ -224,6 +224,7 @@ Create Paperclip-style pages:
 | Dashboard | Company overview, metrics, agent activity |
 | Companies | Company list/management |
 | Org Chart | Visual agent hierarchy |
+| Org Chart | Visual agent hierarchy |
 | Agents | Agent list, create, manage |
 | Agent Detail | Agent config, runs, settings |
 | Goals | Goal hierarchy view |
@@ -249,7 +250,20 @@ Create Paperclip-style pages:
 Build reusable UI:
 - AgentCard, GoalCard, IssueCard
 - OrgChartTree
+  - OrgChartPage (full page with pan/zoom)
+  - OrgNodeCard (individual node)
+  - OrgConnector (SVG lines)
+  - OrgControls (zoom, fit)
 - IssueBoard (kanban)
+  - Drag-and-drop between columns
+  - Swimlanes (by assignee, priority, project)
+  - WIP limits per column
+  - Quick filters
+  - Quick search
+  - Column customization
+  - Card actions (assign, set priority, add label)
+  - Bulk selection
+  - Keyboard shortcuts
 - CommentThread
 - RunTranscript
 - BudgetMeter
@@ -1181,6 +1195,115 @@ ui/src/components/transcript/
 
 ---
 
+## Phase 36: Org Chart
+
+### 36.1 Org Chart API
+
+**Server Routes:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| /companies/:companyId/org | GET | JSON tree of org hierarchy |
+| /companies/:companyId/org.svg | GET | SVG render of org chart |
+| /companies/:companyId/org.png | GET | PNG export |
+
+**Query Parameters:**
+```
+?style=monochrome|nebula|circuit|warmth|schematic
+```
+
+### 36.2 Data Structure
+
+```typescript
+interface OrgNode {
+  id: string;
+  name: string;
+  role: string;
+  status: "running" | "active" | "paused" | "idle" | "error" | "terminated";
+  reports: OrgNode[];  // Children in hierarchy
+}
+```
+
+**Agent Display in Node:**
+```
+- Avatar: 36px circle (from agent.icon)
+- Status dot: 12px colored (bottom-right of avatar)
+- Name: bold 14px
+- Job title: 11px muted
+- Adapter type: 10px monospace (e.g., claude_local)
+- Capabilities: 10px, line-clamped to 2 lines
+```
+
+**Status Colors:**
+```
+running    → cyan (#22d3ee)
+active    → green (#4ade80)
+paused    → yellow (#facc15)
+idle     → yellow (#facc15)
+error    → red (#f87171)
+terminated → gray (#a3a3a3)
+```
+
+### 36.3 Org Chart UI Component
+
+**Page:** `ui/src/pages/OrgChart.tsx`
+
+**Layout:**
+- Card dimensions: 200x100px
+- Horizontal gap: 32px
+- Vertical gap: 80px
+- Hybrid: SVG for connectors + HTML/CSS for cards
+
+**Rendering:**
+- Top-down tree with dynamic width
+- Starts from `reportsTo: null` (CEO/root)
+- Recursively groups by manager ID
+
+**Interactivity:**
+- Click node → Navigate to `/agents/:id`
+- Mouse drag → Pan viewport
+- Scroll wheel → Zoom
+- Touch pinch → Zoom
+- Touch drag → Pan
+- Drag suppression on cards to prevent navigation errors
+
+**Controls:**
+- Zoom in (+) button
+- Zoom out (-) button
+- Fit-to-screen button
+
+### 36.4 Visual Styles (5 themes)
+
+```
+monochrome  - Dark minimal (Vercel-inspired)
+nebula     - Glassmorphism with cosmic gradient
+circuit    - Indigo traces (Linear/Raycast style)
+warmth     - Light with soft shadows (Airbnb-inspired)
+schematic  - Blueprint with grid and monospace
+```
+
+### 36.5 Database Schema
+
+```typescript
+// agents table
+reportsTo: uuid("reports_to").references(() => agents.id)
+// Self-referential FK for org hierarchy
+// null = CEO/root level
+// Non-null = reports to that agent
+```
+
+### 36.6 Service Logic
+
+```typescript
+// agents.service.ts
+orgForCompany(companyId: string): OrgNode[]
+- Query all non-terminated agents for company
+- Group by reportsTo (manager ID)
+- Recursively build tree starting from null
+```
+
+---
+
 ## Phase 35: Issues (Full Implementation)
 
 ### 35.1 Issue Schema (Complete)
@@ -1506,9 +1629,26 @@ originId
 q                  # Full-text search
 ```
 
+**Quick Filters (Kanban UI):**
+```
+My Issues          # Assigned to me
+Due Soon          # Near target date
+Blocked           # Blocked status
+Needs Review      # in_review status
+High Priority     # critical/high priority
+Recently Updated # Last 24h activity
+```
+
 **Search Ordering:**
 1. Priority (critical > high > medium > low)
 2. Most recent activity
+
+**WIP Limits (per column):**
+```
+todo_col_limit: 10      # Max 10 in todo
+in_progress_limit: 5     # Max 5 in progress
+in_review_limit: 3       # Max 3 in review
+```
 
 ### 35.12 Sequential Tasks / Triggers
 
@@ -1555,6 +1695,10 @@ q                  # Full-text search
 ui/src/components/issues/
 ├── IssueCard.tsx
 ├── IssueBoard.tsx         # Kanban board
+│   ├── KanbanColumn.tsx    # Column (backlog, todo, etc.)
+│   ├── KanbanCard.tsx    # Issue card in board
+│   ├── KanbanSwimlane.tsx # Swimlane component
+│   └── DragDropContext.tsx
 ├── IssueList.tsx
 ├── IssueDetail.tsx
 ├── IssueCreate.tsx
@@ -1563,9 +1707,13 @@ ui/src/components/issues/
 ├── IssueLabels.tsx
 ├── IssueRelations.tsx
 ├── IssuePriority.tsx
+├── IssueFilters.tsx       # Quick filters
+├── IssueSearch.tsx
+├── IssueBulkActions.tsx  # Bulk operations
 ├── CheckoutButton.tsx
 ├── ReleaseButton.tsx
-└── IssueSearch.tsx
+├── InlineAssignee.tsx    # Quick assignee
+└── InlinePriority.tsx   # Quick priority
 ```
 
 ### 35.14 Issue API Routes
@@ -1573,17 +1721,21 @@ ui/src/components/issues/
 | Endpoint | Method | Description |
 |----------|--------|------------|
 | /companies/:id/issues | GET | List with filters |
-| /issues | POST | Create |
+| /companies/:id/issues | POST | Create |
 | /issues/:id | GET | Detail |
 | /issues/:id | PATCH | Update |
 | /issues/:id/checkout | POST | Checkout |
 | /issues/:id/release | POST | Release |
+| /issues/:id/status | PATCH | Quick status update (Kanban) |
+| /issues/:id/bulk | POST | Bulk update |
+| /issues/:id/move | POST | Move to column (drag-drop) |
 | /issues/:id/comments | GET/POST | Comments |
 | /issues/:id/documents | GET/POST | Documents |
 | /issues/:id/labels | GET/POST/DELETE | Labels |
 | /issues/:id/relations | GET/POST | Relations |
 | /issues/:id/children | GET/POST | Child issues |
 | /issues/:id/heartbeat-context | GET | Agent context |
+| /issues/:id/work-products | GET/POST | Work products |
 
 ---
 
@@ -1783,6 +1935,15 @@ ui/src/components/issues/
 10. Add run tracking + work products
 11. Add search/filtering
 12. Add sequential task triggers
+
+### Step 35: Org Chart
+
+1. Add org chart API endpoints (JSON, SVG, PNG)
+2. Add OrgNode data structure
+3. Add OrgChart UI component
+4. Add 5 visual styles
+5. Add pan/zoom controls
+6. Add database schema (reportsTo FK)
 
 ---
 
