@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cd /content/company-dai/
 
 PORT=${PORT:-3001}
@@ -15,16 +17,29 @@ trap cleanup EXIT INT TERM
 
 echo "=== Company-dai Setup ==="
 
+if ! command -v node &> /dev/null; then
+    echo "Installing Node.js..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    apt-get install -y nodejs
+fi
+
+if ! command -v pnpm &> /dev/null; then
+    echo "Installing pnpm..."
+    npm install -g pnpm
+fi
+
 if [ "$1" == "install" ] || [ -z "$1" ]; then
     echo "Installing dependencies..."
+    pnpm config set enable-pre-post-scripts true
     pnpm install
+    pnpm approve-builds all || true
     echo "✓ Dependencies installed"
 fi
 
-# Build only packages that compile successfully (skip server which uses tsx)
 if [ "$1" == "build" ] || [ "$1" == "prod" ] || [ -z "$1" ]; then
     echo "Building UI..."
-    cd ui && npx vite build 2>/dev/null || true
+    cd ui
+    npx vite build
     cd ..
     echo "✓ Build complete"
 fi
