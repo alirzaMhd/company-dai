@@ -10,7 +10,6 @@ export default defineConfig(({ mode }) => ({
     minify: "esbuild",
   },
   // Enable Rolldown for 5-8x faster production builds
-  // Rolldown is Rust-based and replaces Rollup
   experimental: {
     bundler: "rolldown",
   },
@@ -24,7 +23,29 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      lexical: path.resolve(__dirname, "./node_modules/lexical/Lexical.mjs"),
+      "lexical": path.resolve(__dirname, "../node_modules/lexical/Lexical.mjs"),
+      // /ui aliases first
+      "@paperclipai/adapter-codex-local/ui": path.resolve(__dirname, "../packages/adapters/codex-local/src/ui"),
+      "@paperclipai/adapter-cursor-local/ui": path.resolve(__dirname, "../packages/adapters/cursor-local/src/ui"),
+      "@paperclipai/adapter-gemini-local/ui": path.resolve(__dirname, "../packages/adapters/gemini-local/src/ui"),
+      "@paperclipai/adapter-claude-local/ui": path.resolve(__dirname, "../packages/adapters/claude-local/src/ui"),
+      "@paperclipai/adapter-opencode-local/ui": path.resolve(__dirname, "../packages/adapters/opencode-local/src/ui"),
+      "@paperclipai/opencode-remote/ui": path.resolve(__dirname, "../packages/adapters/opencode-remote/src/ui"),
+      "@paperclipai/adapter-openclaw-gateway/ui": path.resolve(__dirname, "../packages/adapters/openclaw-gateway/src/ui"),
+      "@paperclipai/adapter-pi-local/ui": path.resolve(__dirname, "../packages/adapters/pi-local/src/ui"),
+      "hermes-paperclip-adapter/ui": path.resolve(__dirname, "../packages/adapters/hermes-local/src/ui"),
+      // base aliases (without /ui)
+      "@paperclipai/shared": path.resolve(__dirname, "../packages/shared/src/index"),
+      "@paperclipai/adapter-utils": path.resolve(__dirname, "../packages/adapter-utils/src/index"),
+      "@paperclipai/adapter-codex-local": path.resolve(__dirname, "../packages/adapters/codex-local/src/index"),
+      "@paperclipai/adapter-cursor-local": path.resolve(__dirname, "../packages/adapters/cursor-local/src/index"),
+      "@paperclipai/adapter-gemini-local": path.resolve(__dirname, "../packages/adapters/gemini-local/src/index"),
+      "@paperclipai/adapter-claude-local": path.resolve(__dirname, "../packages/adapters/claude-local/src/index"),
+      "@paperclipai/adapter-opencode-local": path.resolve(__dirname, "../packages/adapters/opencode-local/src/index"),
+      "@paperclipai/opencode-remote": path.resolve(__dirname, "../packages/adapters/opencode-remote/src/index"),
+      "@paperclipai/adapter-openclaw-gateway": path.resolve(__dirname, "../packages/adapters/openclaw-gateway/src/index"),
+      "@paperclipai/adapter-pi-local": path.resolve(__dirname, "../packages/adapters/pi-local/src/index"),
+      "hermes-paperclip-adapter": path.resolve(__dirname, "../packages/adapters/hermes-local/src/index"),
     },
   },
   server: {

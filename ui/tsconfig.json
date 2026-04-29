@@ -15,7 +15,11 @@
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@paperclipai/shared": ["../packages/shared/src/index.ts"],
+      "@paperclipai/shared/*": ["../packages/shared/src/*"],
+      "@paperclipai/adapter-utils": ["../packages/adapter-utils/src/index.ts"],
+      "@paperclipai/adapter-utils/*": ["../packages/adapter-utils/src/*"]
     }
   },
   "include": ["src"]

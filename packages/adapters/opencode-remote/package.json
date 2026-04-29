@@ -1,0 +1,6 @@
+{
+  "name": "@company-dai/adapter-opencode-remote",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": "./src/index.ts"
+}
