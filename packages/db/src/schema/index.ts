@@ -1,252 +1,71 @@
-import { pgTable, text, timestamp, uuid, boolean, integer, jsonb, real } from 'drizzle-orm/pg-core';
-
-export const companies = pgTable('companies', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  status: text('status').notNull().default('active'),
-  budget: real('budget').notNull().default(0),
-  branding: jsonb('branding'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const authUsers = pgTable('auth_users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email').notNull().unique(),
-  name: text('name').notNull(),
-  passwordHash: text('password_hash'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const authSessions = pgTable('auth_sessions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => authUsers.id),
-  token: text('token').notNull().unique(),
-  expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const companyMemberships = pgTable('company_memberships', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  userId: uuid('user_id').references(() => authUsers.id),
-  agentId: uuid('agent_id'),
-  role: text('role').notNull().default('member'),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const agents = pgTable('agents', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  name: text('name').notNull(),
-  nameKey: text('name_key').notNull(),
-  status: text('status').notNull().default('active'),
-  icon: text('icon'),
-  role: text('role'),
-  adapterType: text('adapter_type').notNull().default('opencode-local'),
-  adapterConfig: jsonb('adapter_config'),
-  reportsTo: uuid('reports_to'),
-  monthlyBudget: real('monthly_budget').notNull().default(0),
-  currentCost: real('current_cost').notNull().default(0),
-  heartbeatSchedule: text('heartbeat_schedule'),
-  lastHeartbeatAt: timestamp('last_heartbeat_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const projects = pgTable('projects', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  name: text('name').notNull(),
-  description: text('description'),
-  status: text('status').notNull().default('active'),
-  targetDate: timestamp('target_date'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const goals = pgTable('goals', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  parentId: uuid('parent_id'),
-  title: text('title').notNull(),
-  description: text('description'),
-  status: text('status').notNull().default('active'),
-  level: text('level').notNull().default('team'),
-  targetDate: timestamp('target_date'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const issues = pgTable('issues', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  issueNumber: integer('issue_number').notNull(),
-  identifier: text('identifier').notNull(),
-  projectId: uuid('project_id').references(() => projects.id),
-  goalId: uuid('goal_id').references(() => goals.id),
-  parentId: uuid('parent_id'),
-  title: text('title').notNull(),
-  description: text('description'),
-  status: text('status').notNull().default('backlog'),
-  priority: text('priority').notNull().default('medium'),
-  assigneeAgentId: uuid('assignee_agent_id').references(() => agents.id),
-  assigneeUserId: uuid('assignee_user_id').references(() => authUsers.id),
-  checkoutRunId: uuid('checkout_run_id'),
-  executionRunId: uuid('execution_run_id'),
-  executionAgentNameKey: text('execution_agent_name_key'),
-  executionLockedAt: timestamp('execution_locked_at'),
-  executionPolicy: jsonb('execution_policy'),
-  executionState: jsonb('execution_state'),
-  originKind: text('origin_kind').default('manual'),
-  originId: text('origin_id'),
-  startedAt: timestamp('started_at'),
-  completedAt: timestamp('completed_at'),
-  cancelledAt: timestamp('cancelled_at'),
-  createdByAgentId: uuid('created_by_agent_id').references(() => agents.id),
-  createdByUserId: uuid('created_by_user_id').references(() => authUsers.id),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const issueComments = pgTable('issue_comments', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  issueId: uuid('issue_id').notNull().references(() => issues.id),
-  authorAgentId: uuid('author_agent_id').references(() => agents.id),
-  authorUserId: uuid('author_user_id').references(() => authUsers.id),
-  body: text('body').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const issueRelations = pgTable('issue_relations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  issueId: uuid('issue_id').notNull().references(() => issues.id),
-  relatedIssueId: uuid('related_issue_id').notNull().references(() => issues.id),
-  type: text('type').notNull().default('relates_to'),
-  createdByAgentId: uuid('created_by_agent_id').references(() => agents.id),
-  createdByUserId: uuid('created_by_user_id').references(() => authUsers.id),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const labels = pgTable('labels', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  name: text('name').notNull(),
-  color: text('color').notNull().default('#6b7280'),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const issueLabels = pgTable('issue_labels', {
-  issueId: uuid('issue_id').notNull().references(() => issues.id),
-  labelId: uuid('label_id').notNull().references(() => labels.id)
-});
-
-export const heartbeatRuns = pgTable('heartbeat_runs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  agentId: uuid('agent_id').notNull().references(() => agents.id),
-  issueId: uuid('issue_id').references(() => issues.id),
-  status: text('status').notNull().default('queued'),
-  startedAt: timestamp('started_at'),
-  completedAt: timestamp('completed_at'),
-  error: text('error'),
-  transcript: text('transcript'),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const costEvents = pgTable('cost_events', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  agentId: uuid('agent_id').notNull().references(() => agents.id),
-  provider: text('provider').notNull(),
-  model: text('model').notNull(),
-  inputTokens: integer('input_tokens').notNull().default(0),
-  outputTokens: integer('output_tokens').notNull().default(0),
-  costCents: real('cost_cents').notNull().default(0),
-  runId: uuid('run_id').references(() => heartbeatRuns.id),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const fileContents = pgTable('file_contents', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  path: text('path').notNull(),
-  content: text('content'),
-  mimeType: text('mime_type').default('text/plain'),
-  size: integer('size').notNull().default(0),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const fileVersions = pgTable('file_versions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  fileId: uuid('file_id').notNull().references(() => fileContents.id),
-  version: integer('version').notNull(),
-  content: text('content').notNull(),
-  createdByAgentId: uuid('created_by_agent_id').references(() => agents.id),
-  createdByUserId: uuid('created_by_user_id').references(() => authUsers.id),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const activitiesLog = pgTable('activities_log', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').references(() => companies.id),
-  userId: uuid('user_id').references(() => authUsers.id),
-  agentId: uuid('agent_id').references(() => agents.id),
-  action: text('action').notNull(),
-  entityType: text('entity_type'),
-  entityId: uuid('entity_id'),
-  metadata: jsonb('metadata'),
-  createdAt: timestamp('created_at').notNull().defaultNow()
-});
-
-export const approvals = pgTable('approvals', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  type: text('type').notNull(),
-  status: text('status').notNull().default('pending'),
-  requestedByAgentId: uuid('requested_by_agent_id').references(() => agents.id),
-  requestedByUserId: uuid('requested_by_user_id').references(() => authUsers.id),
-  targetAgentId: uuid('target_agent_id').references(() => agents.id),
-  decision: text('decision'),
-  decidedByUserId: uuid('decided_by_user_id').references(() => authUsers.id),
-  decidedAt: timestamp('decided_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const instanceSettings = pgTable('instance_settings', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  key: text('key').notNull().unique(),
-  value: jsonb('value').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const plugins = pgTable('plugins', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  key: text('key').notNull().unique(),
-  name: text('name').notNull(),
-  version: text('version').notNull(),
-  enabled: boolean('enabled').notNull().default(false),
-  config: jsonb('config'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
-
-export const routines = pgTable('routines', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  companyId: uuid('company_id').notNull().references(() => companies.id),
-  name: text('name').notNull(),
-  cronExpression: text('cron_expression').notNull(),
-  issueId: uuid('issue_id').references(() => issues.id),
-  agentId: uuid('agent_id').references(() => agents.id),
-  enabled: boolean('enabled').notNull().default(true),
-  lastRunAt: timestamp('last_run_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
-});
+export { companies } from "./companies.js";
+export { companyLogos } from "./company_logos.js";
+export { authUsers, authSessions, authAccounts, authVerifications } from "./auth.js";
+export { instanceSettings } from "./instance_settings.js";
+export { instanceUserRoles } from "./instance_user_roles.js";
+export { userSidebarPreferences } from "./user_sidebar_preferences.js";
+export { agents } from "./agents.js";
+export { boardApiKeys } from "./board_api_keys.js";
+export { cliAuthChallenges } from "./cli_auth_challenges.js";
+export { companyMemberships } from "./company_memberships.js";
+export { companyUserSidebarPreferences } from "./company_user_sidebar_preferences.js";
+export { principalPermissionGrants } from "./principal_permission_grants.js";
+export { invites } from "./invites.js";
+export { joinRequests } from "./join_requests.js";
+export { budgetPolicies } from "./budget_policies.js";
+export { budgetIncidents } from "./budget_incidents.js";
+export { agentConfigRevisions } from "./agent_config_revisions.js";
+export { agentApiKeys } from "./agent_api_keys.js";
+export { agentRuntimeState } from "./agent_runtime_state.js";
+export { agentTaskSessions } from "./agent_task_sessions.js";
+export { agentWakeupRequests } from "./agent_wakeup_requests.js";
+export { projects } from "./projects.js";
+export { projectWorkspaces } from "./project_workspaces.js";
+export { executionWorkspaces } from "./execution_workspaces.js";
+export { environments } from "./environments.js";
+export { environmentLeases } from "./environment_leases.js";
+export { workspaceOperations } from "./workspace_operations.js";
+export { workspaceRuntimeServices } from "./workspace_runtime_services.js";
+export { projectGoals } from "./project_goals.js";
+export { goals } from "./goals.js";
+export { issues } from "./issues.js";
+export { issueReferenceMentions } from "./issue_reference_mentions.js";
+export { issueRelations } from "./issue_relations.js";
+export { routines, routineTriggers, routineRuns } from "./routines.js";
+export { issueWorkProducts } from "./issue_work_products.js";
+export { labels } from "./labels.js";
+export { issueLabels } from "./issue_labels.js";
+export { issueApprovals } from "./issue_approvals.js";
+export { issueComments } from "./issue_comments.js";
+export { issueThreadInteractions } from "./issue_thread_interactions.js";
+export { issueExecutionDecisions } from "./issue_execution_decisions.js";
+export { issueInboxArchives } from "./issue_inbox_archives.js";
+export { inboxDismissals } from "./inbox_dismissals.js";
+export { feedbackVotes } from "./feedback_votes.js";
+export { feedbackExports } from "./feedback_exports.js";
+export { issueReadStates } from "./issue_read_states.js";
+export { assets } from "./assets.js";
+export { issueAttachments } from "./issue_attachments.js";
+export { documents } from "./documents.js";
+export { documentRevisions } from "./document_revisions.js";
+export { issueDocuments } from "./issue_documents.js";
+export { heartbeatRuns } from "./heartbeat_runs.js";
+export { heartbeatRunEvents } from "./heartbeat_run_events.js";
+export { costEvents } from "./cost_events.js";
+export { financeEvents } from "./finance_events.js";
+export { approvals } from "./approvals.js";
+export { approvalComments } from "./approval_comments.js";
+export { activityLog } from "./activity_log.js";
+export { companySecrets } from "./company_secrets.js";
+export { companySecretVersions } from "./company_secret_versions.js";
+export { companySkills } from "./company_skills.js";
+export { plugins } from "./plugins.js";
+export { pluginConfig } from "./plugin_config.js";
+export { pluginCompanySettings } from "./plugin_company_settings.js";
+export { pluginState } from "./plugin_state.js";
+export { pluginEntities } from "./plugin_entities.js";
+export { pluginDatabaseNamespaces, pluginMigrations } from "./plugin_database.js";
+export { pluginJobs, pluginJobRuns } from "./plugin_jobs.js";
+export { pluginWebhookDeliveries } from "./plugin_webhooks.js";
+export { pluginLogs } from "./plugin_logs.js";
+export { accounts, contacts, interactions } from "./crm.js";

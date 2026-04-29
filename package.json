@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "concurrently \"pnpm -F server dev\" \"pnpm -F ui dev\"",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm -r typecheck --ignore-scripts",
     "test": "vitest",
     "db:generate": "pnpm -F @company-dai/db db:generate",
     "db:migrate": "pnpm -F @company-dai/db db:migrate"

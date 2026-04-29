@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@company-dai/shared": "workspace:*",
     "drizzle-orm": "^0.39.0",
     "postgres": "^3.0.0"
   },
