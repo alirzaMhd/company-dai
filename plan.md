@@ -138,6 +138,9 @@ Create tables matching Paperclip's V1 spec:
 // agent_runtime_state - agent runtime state
 // workspace_operations - workspace operations tracking
 // workspace_runtime_services - runtime services per workspace
+// issue_thread_interactions - questions, confirmations, suggestions
+// issue_interaction_answers - human responses
+// issue_interaction_results - final outcomes
 ```
 
 ### 2.2 Migrations
@@ -183,6 +186,9 @@ Create REST endpoints per domain:
 | preferences | user, company |
 | backups | create, restore, list |
 | llms | config, pricing |
+| events | realtime, sse |
+| interactions | questions, confirmations, answers |
+| transcripts | live, history |
 
 ### 3.2 Services
 
@@ -194,6 +200,9 @@ Business logic services:
 - CostsService (budgets, rollups)
 - HeartbeatService (scheduling)
 - ApprovalsService
+- LiveEventsService (real-time streaming)
+- InteractionsService (questions, confirmations)
+- RoutinesService (scheduled tasks)
 
 ### 3.3 Middleware
 
@@ -228,6 +237,7 @@ Create Paperclip-style pages:
 | Preferences | User preferences |
 | Backups | Database backups |
 | LLMs | LLM configuration |
+| Live | Real-time run view |
 
 ### 4.2 Components
 
@@ -944,6 +954,127 @@ services/llms/
 
 ---
 
+## Phase 32: Real-time Streaming
+
+### 32.1 WebSocket Events
+
+```
+server/src/realtime/
+├── src/
+│   ├── live-events-ws.ts   # WebSocket handler
+│   ├── live-events.ts     # Pub/sub service
+│   └── types.ts          # Event types
+```
+
+- WebSocket endpoint: `/api/companies/:companyId/events/ws`
+- Real-time event publishing
+- Company-specific event channels
+- Client connection management
+
+### 32.2 Event Types
+
+```
+heartbeat.run.queued     # Run queued for execution
+heartbeat.run.status    # Run state changed
+heartbeat.run.event     # Run event (errors, etc)
+heartbeat.run.log      # Streaming log output
+agent.status          # Agent status changes
+activity.logged       # New activity
+plugin.ui.updated     # Plugin UI update
+plugin.worker.crashed # Plugin crash
+```
+
+### 32.3 SSE for Plugins
+
+Endpoint: `/api/plugins/:pluginId/bridge/stream/:channel`
+- Text/event-stream content type
+- PluginStreamBus for plugin streaming
+
+---
+
+## Phase 33: Human-in-the-Loop Interactions
+
+### 33.1 Interaction Types
+
+```
+services/interactions/
+├── src/
+│   ├── types.ts          # Interaction types
+│   ├── questions.ts      # Question handling
+│   ├── confirmations.ts # Confirmation handling
+│   └── suggestions.ts   # Task suggestions
+```
+
+Three interaction types:
+
+1. **`ask_user_questions`** - Multi-question forms
+   - Single/multi selection options
+   - Required questions
+   - Help text per question
+
+2. **`request_confirmation`** - Approval requests
+   - Accept/reject buttons
+   - Optional reject reason
+   - Target context (e.g., document revision)
+
+3. **`suggest_tasks`** - Task suggestions
+   - Agent-suggested tasks
+   - Board/agent targets
+
+### 33.2 Continuation Policies
+
+Controls agent behavior after human responds:
+- `wake_assignee` - Resume agent after response
+- `await_approval` - Wait for explicit approval
+- Custom policies
+
+### 33.3 UI Components
+
+```
+ui/src/components/
+├── AskUserQuestionsCard.tsx
+├── RequestConfirmationCard.tsx
+├── InteractionThread.tsx
+└── QuestionOptionButton.tsx
+```
+
+- Inline in issue thread
+- Real-time updates via WebSocket
+- Submit handlers via REST API
+
+### 33.4 Database Schema
+
+```typescript
+// issue_thread_interactions - questions, confirmations, suggestions
+// issue_interaction_answers - human responses
+// issue_interaction_results - final outcomes
+```
+
+---
+
+## Phase 34: Run Transcripts
+
+### 34.1 Live Run Transcripts
+
+```
+ui/src/components/transcript/
+├── useLiveRunTranscripts.ts   # WebSocket hook
+├── RunTranscript.tsx        # Transcript display
+└── types.ts                 # Transcript types
+```
+
+- Real-time log streaming
+- Run state display
+- Event handling (queued, running, completed, failed)
+
+### 34.2 Transcript Persistence
+
+- Stored in heartbeat_runs table
+- Full log history
+- Searchable/filterable
+
+---
+
 ## Migration Steps
 
 ### Step 1: Setup
@@ -1108,6 +1239,23 @@ services/llms/
 
 1. Add LLM configuration
 2. Add pricing management
+
+### Step 31: Real-time Streaming
+
+1. Add WebSocket infrastructure
+2. Add event pub/sub system
+3. Add SSE for plugins
+
+### Step 32: Human Interactions
+
+1. Add interaction types (questions, confirmations)
+2. Add UI components
+3. Add continuation policies
+
+### Step 33: Run Transcripts
+
+1. Add live transcript hook
+2. Add transcript display
 
 ---
 
