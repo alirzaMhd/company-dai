@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const distPath = path.join(__dirname, '..', '..', 'dist');
+// UI builds to ui/dist, so we need to point there
+const distPath = path.join(__dirname, '..', 'ui', 'dist');
 
 import companiesRouter from './routes/companies.js';
 import agentsRouter from './routes/agents.js';
