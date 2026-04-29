@@ -1,6 +1,32 @@
 {
   "name": "@company-dai/adapter-opencode-remote",
   "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
-  "exports": "./src/index.ts"
+  "main": "./src/server/index.ts",
+  "types": "./src/server/index.ts",
+  "exports": {
+    ".": {
+      "server": "./src/server/index.ts",
+      "ui": "./src/ui/index.ts",
+      "default": "./src/server/index.ts"
+    },
+    "./server": "./src/server/index.ts",
+    "./ui": "./src/ui/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@company-dai/adapter-utils": "workspace:*",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.7.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5.7.3"
+  }
 }

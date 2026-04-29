@@ -53,7 +53,6 @@ async def run_opencode_models() -> list:
         line = line.strip()
         if not line:
             continue
-        # Skip help text and non-model lines
         if line.startswith("opencode/") or line.startswith("/"):
             model_id = line.split("/")[-1] if "/" in line else line
             models.append({
@@ -117,7 +116,6 @@ async def run_opencode(
     
     await stream_output(ws, f"$ {' '.join(args)}", "system")
     
-    # Build environment
     env = os.environ.copy()
     env["OPENCODE_DISABLE_PROJECT_CONFIG"] = "1"
     
@@ -130,14 +128,12 @@ async def run_opencode(
         env=env,
     )
     
-    # Send prompt to stdin
     proc.stdin.write(prompt.encode() + b"\n")
     await proc.stdin.drain()
     proc.stdin.close()
     
     stdout_lines = []
     
-    # Stream stdout
     while True:
         line = await proc.stdout.readline()
         if not line:
@@ -176,7 +172,6 @@ async def execute_endpoint(ws: WebSocket):
         await ws.send_json({"type": "error", "error": str(e)})
         return
     
-    # Handle models request
     if msg.get("type") == "models":
         await handle_models_request(ws)
         return
@@ -188,8 +183,6 @@ async def execute_endpoint(ws: WebSocket):
     session_id = msg.get("session_id")
     extra_args = msg.get("extra_args", [])
 
-    # Validate cwd exists in Colab environment, otherwise use default
-    # The client may send a local Windows path which doesn't exist in Colab
     if cwd and not Path(cwd).exists():
         await stream_output(ws, f"[warning] Requested cwd '{cwd}' does not exist in Colab, using default: {os.getcwd()}\n", "stderr")
         cwd = os.getcwd()
@@ -244,7 +237,6 @@ async def list_sessions():
     return {"sessions": sessions}
 
 
-# For direct execution: python server.py
 if __name__ == "__main__":
     import sys
     port = 3100

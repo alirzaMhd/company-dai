@@ -132,10 +132,38 @@ function getMockModelsByType(type: string): ModelInfo[] {
   return modelsByType[type] ?? [];
 }
 
-router.get('/', async (req, res) => {
+// IMPORTANT: Specific routes with params must come BEFORE catch-all routes
+// Route order matters in Express - first match wins
+
+// Get adapter models: /companies/:companyId/adapters/:type/models
+router.get('/:companyId/adapters/:type/models', async (req, res) => {
   try {
-    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-    res.json(mockAdapters);
+    const { companyId, type } = req.params;
+    console.log("[DEBUG] adapter-models:", { companyId, type });
+    const models = getMockModelsByType(type);
+    res.json(models);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Test adapter environment: /companies/:companyId/adapters/:type/test-environment
+router.post('/:companyId/adapters/:type/test-environment', async (req, res) => {
+  try {
+    const { companyId, type } = req.params;
+    console.log("[DEBUG] test-environment:", { companyId, type, body: req.body });
+    res.json({
+      adapterType: type,
+      status: "pass",
+      checks: [
+        {
+          code: "adapter_configured",
+          level: "info",
+          message: "Test environment check: adapter configured correctly"
+        }
+      ],
+      testedAt: new Date().toISOString()
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -202,36 +230,11 @@ router.post('/:type/reinstall', async (req, res) => {
   }
 });
 
-// Test adapter environment: /companies/:companyId/adapters/:type/test-environment
-router.post('/:companyId/adapters/:type/test-environment', async (req, res) => {
+// Catch-all route - MUST be last
+router.get('/', async (req, res) => {
   try {
-    const { companyId, type } = req.params;
-    console.log("[DEBUG] test-environment:", { companyId, type, body: req.body });
-    // Return proper AdapterEnvironmentTestResult format with checks array
-    res.json({
-      adapterType: type,
-      status: "pass",
-      checks: [
-        {
-          code: "adapter_configured",
-          level: "info",
-          message: "Test environment check: adapter configured correctly"
-        }
-      ],
-      testedAt: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get adapter models: /companies/:companyId/adapters/:type/models
-router.get('/:companyId/adapters/:type/models', async (req, res) => {
-  try {
-    const { companyId, type } = req.params;
-    console.log("[DEBUG] adapter-models:", { companyId, type });
-    const models = getMockModelsByType(type);
-    res.json(models);
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    res.json(mockAdapters);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
