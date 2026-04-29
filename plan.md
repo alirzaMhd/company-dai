@@ -89,43 +89,81 @@ Migrate from npm to pnpm and add Paperclip dependencies:
 
 ### 2.1 Core Tables
 
-Create tables matching Paperclip's V1 spec:
+**All data stored in PostgreSQL - complete sync across devices**
 
 ```typescript
+// ========== IDENTITY & AUTH ==========
+// auth_users - human users
+// auth_accounts - OAuth/credential accounts
+// auth_sessions - active login sessions
+// auth_verifications - email verification, password reset
+// auth_credentials - password hashes
+
 // companies - first-order entity with budget, status, branding
 // company_memberships - user/agent membership in companies
+// company_logos - company branding (stored in DB)
+
 // agents - AI agents with org hierarchy (reportsTo), adapter config
-// goals - hierarchical goal structure (company → team → agent)
+// agent_config_revisions - agent configuration versioning
+// agent_runtime_state - agent runtime state persistence
+// agent_api_keys - agent API key authentication
+
+// ========== WORKSPACE & FILES ==========
 // projects - workspace containers
 // project_workspaces - development environments
+// execution_workspaces - runtime execution environments
+// workspace_operations - workspace operations tracking
+// workspace_runtime_services - runtime services per workspace
+// environment_leases - environment lease/booking system
+// environments - environment configurations
+// file_contents - ALL file content stored in DB (not filesystem)
+// file_versions - version history for all files
+// file_metadata - path, size, mime type, etc.
+
+// ========== TASKS & WORK ==========
+// goals - hierarchical goal structure (company → team → agent)
+// projects - workspace containers
 // issues - tasks with parent/child hierarchy, status, priority
 // issue_comments - threaded conversations
 // issue_documents - issue-attached documents
 // issue_labels, labels - labeling system
 // issue_relations - issue relationships (blockers)
 // issue_approvals - approval requests linked to issues
+// issue_thread_interactions - questions, confirmations, suggestions
+// issue_interaction_answers - human responses
+// issue_interaction_results - final outcomes
+// issue_work_products - external work products (PRs, commits)
+
+// ========== EXECUTION ==========
 // heartbeat_runs - agent execution history with events
+// heartbeat_run_events - heartbeat run events/logs
 // cost_events - token/cost tracking per agent
 // budget_policies, budget_incidents - budget management
+
+// ========== GOVERNANCE ==========
 // approvals - board governance
-// activity_log - audit trail
-// users - human operators
-// sessions - auth sessions
-// auth_users, auth_accounts, auth_verifications - user auth
-// company_api_keys - agent API key authentication
+// approval_comments - comments on approvals
+
+// ========== OPERATIONS ==========
+// activities_log - audit trail (all actions logged)
+// activity_log - comprehensive activity
+
+// ========== CONFIGURATION ==========
 // instance_settings - instance-level configuration
 // principal_permission_grants - fine-grained permissions
 // routines - scheduled recurring tasks
 // company_skills - company-specific skills
+// secrets - encrypted secret storage
+
+// ========== PLUGINS ==========
 // plugins - plugin registry
 // plugin_state, plugin_database - plugin data
 // plugin_jobs, plugin_webhooks - plugin scheduled jobs/webhooks
-// execution_workspaces - runtime execution environments
-// environments - environment configurations
-// environment_leases - environment lease/booking system
-// secrets - encrypted secret storage
-// auth_users, auth_sessions, auth_accounts, auth_verifications
-// activities_log - audit trail
+// plugin_entities - plugin entity definitions
+// plugin_logs - plugin logging
+// plugin_company_settings - per-company plugin settings
+
+// ========== USER FEATURES ==========
 // assets - file/asset management
 // inbox_dismissals - inbox notification dismissals
 // issue_inbox_archives - issue inbox archiving
@@ -133,16 +171,18 @@ Create tables matching Paperclip's V1 spec:
 // cli_auth_challenges - CLI authentication challenges
 // user_sidebar_preferences - user preferences
 // company_user_sidebar_preferences - company-level user preferences
-// company_logos - company branding
-// agent_config_revisions - agent configuration versioning
-// agent_runtime_state - agent runtime state
-// workspace_operations - workspace operations tracking
-// workspace_runtime_services - runtime services per workspace
-// issue_thread_interactions - questions, confirmations, suggestions
-// issue_interaction_answers - human responses
-// issue_interaction_results - final outcomes
-// issue_work_products - external work products (PRs, commits)
+
+// ========== AGENT SESSIONS ==========
+// agent_sessions - multi-turn conversational sessions
+// agent_instructions - managed instruction bundles
 ```
+
+**File Storage Strategy:**
+- ALL file content stored in PostgreSQL (bytea or TEXT)
+- Version history for every file change
+- Sync on login: download all changes since last login
+- No local filesystem for project files
+- Same account on any computer = exact same state
 
 ### 2.2 Migrations
 
@@ -169,7 +209,7 @@ Create REST endpoints per domain:
 | heartbeat | invoke, status, runs |
 | costs | events, rollups |
 | approvals | request, decide |
-| auth | login, logout, sessions |
+| auth | login, logout, sessions, register |
 | routines | CRUD, triggers |
 | company-skills | CRUD, sync |
 | plugins | CRUD, enable, config, api routes |
@@ -190,6 +230,7 @@ Create REST endpoints per domain:
 | events | realtime, sse |
 | interactions | questions, confirmations, answers |
 | transcripts | live, history |
+| files | CRUD, content, versions, sync |
 
 ### 3.2 Services
 
@@ -204,26 +245,54 @@ Business logic services:
 - LiveEventsService (real-time streaming)
 - InteractionsService (questions, confirmations)
 - RoutinesService (scheduled tasks)
+- FileService (file content, versions, sync)
+- SyncService (login sync, delta sync)
+- SessionService (session persistence)
 
 ### 3.3 Middleware
 
 - Company access enforcement
 - Auth (session + API keys)
 - Activity logging
+- File sync on login
+
+### 3.4 File Sync Flow (Critical)
+
+**On Login:**
+1. Client sends `lastSyncTimestamp`
+2. Server returns ALL changes since that timestamp
+3. Client applies changes
+4. Full state restored
+
+**On File Change:**
+1. Agent makes change
+2. Save to DB immediately
+3. Activity logged with timestamp
+4. Other clients can poll/diff
 
 ---
 
 ## Phase 4: UI (ui/)
 
-### 4.1 Pages
+### 4.1 Styling
 
-Create Paperclip-style pages:
+**Match custom-paperclip UI exactly**
+
+Copy from `/content/custom-paperclip/ui/`:
+- All UI components
+- All styling (CSS, Tailwind)
+- Layout structure
+- Routes
+- Page components
+
+### 4.2 Pages
+
+Create Paperclip-style pages (copy from Paperclip):
 
 | Page | Description |
 |------|------------|
 | Dashboard | Company overview, metrics, agent activity |
 | Companies | Company list/management |
-| Org Chart | Visual agent hierarchy |
 | Org Chart | Visual agent hierarchy |
 | Agents | Agent list, create, manage |
 | Agent Detail | Agent config, runs, settings |
@@ -333,22 +402,49 @@ interface AgentConfig {
 }
 ```
 
-### 5.2 Built-in Adapters
+### 5.2 Adapters
 
-Implement:
+Only these 4 adapters:
 
-| Adapter | Type | Description |
-|---------|------|------------|
-| opencode-local | process | Local OpenCode process |
-| opencode-remote | websocket | OpenCode remote (websocket) |
-| claude-local | process | Claude Code CLI |
-| codex-local | process | Codex CLI |
-| cursor-local | process | Cursor CLI |
-| gemini-local | process | Gemini CLI |
-| pi-local | process | Pieces CLI |
-| openclaw-gateway | http | OpenClaw Gateway |
-| openrouter | http | OpenRouter API |
-| http | webhook | External HTTP agent |
+| Adapter | Type | Source | Description |
+|---------|------|--------|-------------|
+| opencode-local | process | **New implementation** | Local OpenCode process |
+| opencode-remote | websocket | **Use `/content/company-dai/colab-opencode-api`** | Colab remote via cloudflared |
+| claude-local | process | **Use Paperclip's `/content/custom-paperclip/packages/adapters/claude-local`** | Claude Code CLI |
+| gemini-local | process | **Use Paperclip's `/content/custom-paperclip/packages/adapters/gemini-local`** | Gemini CLI |
+
+### 5.2.1 OpenCode Local
+
+Implementation from scratch:
+- Execute OpenCode CLI locally
+- Session management
+- Model detection via `--version`
+
+### 5.2.2 OpenCode Remote
+
+**Use existing code from `/content/company-dai/colab-opencode-api`:**
+- Copy `server.py` to adapter
+- WebSocket communication with Colab
+- Path translation (local → Colab `/content`)
+- Session fallback handling
+
+**Colab Setup:**
+1. Upload files to Colab
+2. Run `run_colab.py`
+3. Get tunnel URL (wss://xxx.trycloudflare.com)
+4. Configure agent with URL
+
+### 5.2.3 Claude Local
+
+**Copy from Paperclip:** `/content/custom-paperclip/packages/adapters/claude-local/`
+- Full implementation already exists
+- Copy to this project
+
+### 5.2.4 Gemini Local
+
+**Copy from Paperclip:** `/content/custom-paperclip/packages/adapters/gemini-local/`
+- Full implementation already exists
+- Copy to this project
 
 ### 5.3 Global Adapter Settings
 
@@ -1961,9 +2057,8 @@ pnpm build          # Full build
 
 ## Notes
 
-- This is a full rewrite, not incremental changes
-- Keep existing data/ agents.json format for initial seed
-- Adapt specific paths and imports from Paperclip to company-dai
-- Use Paperclip's doc/SPEC-implementation.md as reference for exact field definitions
-- Phases 9-24 cover additional features discovered in Paperclip codebase
-- Priority: Core features (1-8) first, then phase 9 onwards for advanced features
+- Full rewrite with ALL data in PostgreSQL (files, sessions, everything)
+- Login from any computer → exact same state
+- UI copied from custom-paperclip
+- Adapters: opencode-local, opencode-remote (Colab), claude-local (Paperclip), gemini-local (Paperclip)
+- File sync: all changes logged with timestamps, delta sync on login
