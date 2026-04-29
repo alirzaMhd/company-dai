@@ -49,6 +49,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

@@ -5,6 +5,7 @@ const router = Router();
 router.get('/', async (req, res) => {
   try {
     const { companyId } = req.query;
+    res.set('Cache-Control', 'public, max-age=10, stale-while-revalidate=60');
     res.json({
       companyCount: 0,
       agentCount: 0,

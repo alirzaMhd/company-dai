@@ -11,6 +11,7 @@ const CreateCompanySchema = z.object({
 
 router.get('/', async (req, res) => {
   try {
+    res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=300');
     res.json({ companies: [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
