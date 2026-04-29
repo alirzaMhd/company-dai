@@ -141,6 +141,7 @@ Create tables matching Paperclip's V1 spec:
 // issue_thread_interactions - questions, confirmations, suggestions
 // issue_interaction_answers - human responses
 // issue_interaction_results - final outcomes
+// issue_work_products - external work products (PRs, commits)
 ```
 
 ### 2.2 Migrations
@@ -1075,6 +1076,412 @@ ui/src/components/transcript/
 
 ---
 
+## Phase 35: Issues (Full Implementation)
+
+### 35.1 Issue Schema (Complete)
+
+```
+packages/db/src/schema/issues.ts
+```
+
+All 40+ fields:
+
+```typescript
+{
+  // Identity
+  id: uuid (PK)
+  companyId: uuid (required, FK)
+  issueNumber: integer (auto-incrementing)
+  identifier: text (e.g., "PAP-123")
+
+  // Hierarchy
+  projectId: uuid (FK, optional)
+  projectWorkspaceId: uuid (optional)
+  goalId: uuid (FK, optional)
+  parentId: uuid (self-ref, for child issues)
+
+  // Content
+  title: text (required)
+  description: text (optional)
+
+  // Status & Priority
+  status: text (default: "backlog")
+  priority: text (default: "medium")
+
+  // Assignees (ONE assignee - either agent OR user)
+  assigneeAgentId: uuid (optional, FK)
+  assigneeUserId: text (optional, company user)
+
+  // Execution
+  checkoutRunId: uuid (FK, optional)
+  executionRunId: uuid (FK, optional)
+  executionAgentNameKey: text
+  executionLockedAt: timestamp
+  executionPolicy: jsonb (execution stages/policy)
+  executionState: jsonb (current execution state)
+  executionWorkspaceId: uuid (optional)
+  executionWorkspacePreference: text
+  executionWorkspaceSettings: jsonb
+
+  // Origin tracking
+  originKind: text (default: "manual")
+  originId: text
+  originRunId: text
+  originFingerprint: text (default: "default")
+  requestDepth: integer
+
+  // Adapter config
+  assigneeAdapterOverrides: jsonb
+
+  // Billing
+  billingCode: text
+
+  // Timestamps
+  startedAt: timestamp
+  completedAt: timestamp
+  cancelledAt: timestamp
+  hiddenAt: timestamp (soft delete)
+
+  // Creators
+  createdByAgentId: uuid (optional)
+  createdByUserId: text (optional)
+
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+```
+
+### 35.2 Issue Lifecycle (7 States)
+
+**Status Values:**
+```
+backlog      # Default initial state
+todo        # Ready to work
+in_progress # Actively being worked on
+in_review   # Under review
+blocked    # Blocked by dependencies
+done       # Completed
+cancelled  # Cancelled
+```
+
+**Automatic Side Effects:**
+```
+in_progress → sets startedAt
+done      → sets completedAt
+cancelled → sets cancelledAt
+```
+
+**State Transitions:**
+- Validated via assertTransition()
+- Automatic timestamp management
+
+### 35.3 Checkout System
+
+**Checkout Endpoint:** `POST /issues/:id/checkout`
+
+```typescript
+// Request
+{
+  agentId: string
+  expectedStatuses: string[]  // ["todo", "in_progress"]
+}
+
+// Validation
+- Assignee must be assignable
+- No unresolved blockers
+- Optimistic locking: issue must be in expected status
+- Either unassigned OR same assignee with matching checkoutRunId
+
+// On Success
+- Sets assigneeAgentId
+- Clears assigneeUserId
+- Sets checkoutRunId
+- Sets executionRunId
+- Sets status = "in_progress"
+- Sets startedAt
+```
+
+**Stale Checkout Adoption:**
+```
+adoptStaleCheckoutRun()  # When run terminated
+adoptUnownedCheckoutRun()  # No checkoutRunId but in_progress
+```
+
+**Release:** `POST /issues/:id/release`
+- Clears assignee
+- Clears checkoutRunId/executionRunId
+- Sets status = "todo"
+
+### 35.4 Priority System
+
+**Priority Values:**
+```
+critical  # Highest
+high
+medium   # Default
+low       # Lowest
+```
+
+**Ordering:** critical > high > medium > low
+
+### 35.5 Issue Relations (Blockers)
+
+**Table:** `issue_relations`
+
+```typescript
+{
+  id: uuid
+  companyId: uuid
+  issueId: uuid  // The issue
+  relatedIssueId: uuid  // The related issue
+  type: "blocks" | "relates_to" | "duplicates"
+  createdByAgentId: uuid
+  createdByUserId: text
+  createdAt: timestamp
+}
+```
+
+**Blocker Rules:**
+- Cannot checkout issue with unresolved blockers
+- Auto-wakeup when blocker marked done
+- Cycle prevention (assertNoBlockingCycles())
+
+### 35.6 Enhanced Comments
+
+**Table:** `issue_comments`
+
+```typescript
+{
+  id: uuid
+  companyId: uuid
+  issueId: uuid (required)
+  authorAgentId: uuid (optional)
+  authorUserId: text (optional)
+  createdByRunId: uuid (optional)
+  body: text (required)  // Markdown support
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+```
+
+**Features:**
+- Read state tracking per user
+- Mentions: `@agent`, `@project`
+- Auto-reopen on comment (from done/cancelled to todo)
+- Timestamp on edit
+
+### 35.7 Issue Documents
+
+**Table:** `issue_documents`
+
+```typescript
+{
+  id: uuid
+  companyId: uuid
+  issueId: uuid
+  documentId: uuid (FK)
+  key: text (unique per issue, e.g., "plan", "spec")
+  createdAt: timestamp
+  updatedAt: timestamp
+}
+```
+
+**Special Documents:**
+- `continuation-summary` - Auto-generated for issue continuation
+- Supports revision history
+- Restore to previous revisions
+
+### 35.8 Labels System
+
+**Tables:** `labels`, `issue_labels`
+
+```typescript
+// labels
+{
+  id: uuid
+  companyId: uuid
+  name: text
+  color: text (6-digit hex)
+  createdAt: timestamp
+}
+
+// issue_labels (junction)
+{
+  issueId: uuid
+  labelId: uuid
+}
+```
+
+### 35.9 Heartbeat Context
+
+**Endpoint:** `GET /issues/:id/heartbeat-context`
+
+**Response:**
+
+```typescript
+{
+  issue: {
+    id, identifier, title, description,
+    status, priority,
+    projectId, goalId, parentId,
+    blockedBy: IssueRelationIssueSummary[],
+    blocks: IssueRelationIssueSummary[],
+    assigneeAgentId, assigneeUserId,
+    updatedAt
+  },
+  ancestors: [{ id, identifier, title, status, priority }],
+  project: { id, name, status, targetDate } | null,
+  goal: { id, title, status, level, parentId } | null,
+  commentCursor: string | null,
+  wakeComment: IssueComment | null,
+  attachments: [...],
+  continuationSummary: {...} | null,
+  currentExecutionWorkspace: ExecutionWorkspace | null
+}
+```
+
+**Wakeup Reasons (triggers):**
+```
+issue_assigned
+issue_checked_out
+issue_status_changed
+issue_commented
+issue_reopened_via_comment
+issue_blockers_resolved
+issue_children_completed
+issue_comment_mentioned
+```
+
+### 35.10 Run Tracking
+
+**Execution Fields:**
+- `checkoutRunId` - Run that checked out
+- `executionRunId` - Active execution
+- `executionAgentNameKey` - Agent identifier
+- `executionLockedAt` - Lock timestamp
+- `executionPolicy` - Execution stages
+- `executionState` - Current state
+
+**Work Products:** `issue_work_products`
+
+```typescript
+{
+  id: uuid
+  companyId: uuid
+  issueId: uuid
+  type: "pull_request" | "commit" | "issue" | "doc" | "other"
+  provider: "github" | "gitlab" | "jira" | ...
+  externalId: text
+  title: text
+  url: text
+  status: text
+  reviewState: text
+  healthStatus: text
+  summary: text
+}
+```
+
+### 35.11 Search & Filtering
+
+**List Endpoint:** `GET /companies/:companyId/issues`
+
+**Filters:**
+```
+status              # Comma-separated
+assigneeAgentId    # By agent
+assigneeUserId     # "me" for current user
+participantAgentId # Creator, assignee, commenter
+projectId
+workspaceId
+executionWorkspaceId
+parentId
+labelId
+originKind         # "routine_execution"
+originId
+q                  # Full-text search
+```
+
+**Search Ordering:**
+1. Priority (critical > high > medium > low)
+2. Most recent activity
+
+### 35.12 Sequential Tasks / Triggers
+
+**Triggers Between Issues:**
+
+1. **Blocker Trigger** - "Start X when Y is done"
+   - Issue X has blocker relationship to Y
+   - When Y.status → done, X gets wakeup
+
+2. **Parent-Child Trigger**
+   - When all children done, parent gets wakeup
+   - Specify `blockParentUntilDone`
+
+3. **Trigger Configuration:**
+
+```typescript
+// On child issue creation
+{
+  acceptanceCriteria: text
+  blockParentUntilDone: boolean
+}
+
+// On issue relations
+{
+  type: "blocks"
+  trigger: {
+    when: "issue_completed" | "issue_status_changed"
+    thenWake: "dependent_issues"
+  }
+}
+```
+
+**Auto-Wakeup Triggers:**
+```
+- Blocker resolution → wake blocked issues
+- Children completion → wake parent
+- Status change → wake assignee
+- Comment mention → wake agent
+```
+
+### 35.13 Issue Components (UI)
+
+```
+ui/src/components/issues/
+├── IssueCard.tsx
+├── IssueBoard.tsx         # Kanban board
+├── IssueList.tsx
+├── IssueDetail.tsx
+├── IssueCreate.tsx
+├── IssueCommentThread.tsx
+├── IssueDocuments.tsx
+├── IssueLabels.tsx
+├── IssueRelations.tsx
+├── IssuePriority.tsx
+├── CheckoutButton.tsx
+├── ReleaseButton.tsx
+└── IssueSearch.tsx
+```
+
+### 35.14 Issue API Routes
+
+| Endpoint | Method | Description |
+|----------|--------|------------|
+| /companies/:id/issues | GET | List with filters |
+| /issues | POST | Create |
+| /issues/:id | GET | Detail |
+| /issues/:id | PATCH | Update |
+| /issues/:id/checkout | POST | Checkout |
+| /issues/:id/release | POST | Release |
+| /issues/:id/comments | GET/POST | Comments |
+| /issues/:id/documents | GET/POST | Documents |
+| /issues/:id/labels | GET/POST/DELETE | Labels |
+| /issues/:id/relations | GET/POST | Relations |
+| /issues/:id/children | GET/POST | Child issues |
+| /issues/:id/heartbeat-context | GET | Agent context |
+
+---
+
 ## Migration Steps
 
 ### Step 1: Setup
@@ -1256,6 +1663,21 @@ ui/src/components/transcript/
 
 1. Add live transcript hook
 2. Add transcript display
+
+### Step 34: Issues (Full)
+
+1. Add complete issue schema (40+ fields)
+2. Add issue lifecycle (7 states)
+3. Add checkout system
+4. Add priority system
+5. Add issue relations (blockers)
+6. Add enhanced comments
+7. Add issue documents
+8. Add labels system
+9. Add heartbeat context
+10. Add run tracking + work products
+11. Add search/filtering
+12. Add sequential task triggers
 
 ---
 
