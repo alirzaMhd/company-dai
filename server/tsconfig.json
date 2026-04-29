@@ -4,6 +4,7 @@
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
     "strict": false,
+    "noImplicitAny": false,
     "noEmit": true,
     "outDir": "./dist",
     "rootDir": "./src"

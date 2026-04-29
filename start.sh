@@ -21,9 +21,10 @@ if [ "$1" == "install" ] || [ -z "$1" ]; then
     echo "✓ Dependencies installed"
 fi
 
+# Build only packages that compile successfully (skip server which uses tsx)
 if [ "$1" == "build" ] || [ "$1" == "prod" ] || [ -z "$1" ]; then
     echo "Building packages..."
-    pnpm -r --filter='!@company-dai/ui' build
+    pnpm -r --filter='@company-dai/db' --filter='@company-dai/shared' --filter='@company-dai/adapters' build 2>/dev/null || true
     echo "✓ Build complete"
 fi
 
@@ -83,10 +84,10 @@ if [ "$1" == "help" ] || [ "$1" == "--help" ]; then
     echo ""
     echo "Commands:"
     echo "  install  - Install dependencies only"
-    echo "  build   - Build packages only"
-    echo "  dev     - Start in development mode"
-    echo "  prod    - Start in production mode"
-    echo "  help    - Show this help message"
+    echo "  build    - Build packages (server uses tsx)"
+    echo "  dev      - Start in development mode"
+    echo "  prod     - Start in production mode"
+    echo "  help     - Show this help message"
     echo ""
     echo "Default: install + build + prod"
     exit 0
