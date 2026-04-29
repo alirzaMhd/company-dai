@@ -28,12 +28,16 @@ if ! command -v pnpm &> /dev/null; then
     npm install -g pnpm
 fi
 
-if [ "$1" == "install" ] || [ -z "$1" ]; then
-    echo "Installing dependencies..."
-    pnpm config set enable-pre-post-scripts true
-    pnpm install
-    pnpm approve-builds all || true
-    echo "✓ Dependencies installed"
+if [ "$1" == "install" ] || [ -z "$1" ] || [ "$1" == "build" ] || [ "$1" == "prod" ] || [ "$1" == "dev" ]; then
+    if [ ! -d "node_modules" ] || [ ! -d "ui/node_modules" ] || [ ! -d "server/node_modules" ]; then
+        echo "Installing dependencies..."
+        pnpm config set enable-pre-post-scripts true
+        pnpm install
+        pnpm approve-builds all || true
+        echo "✓ Dependencies installed"
+    else
+        echo "Dependencies already installed, skipping..."
+    fi
 fi
 
 if [ "$1" == "build" ] || [ "$1" == "prod" ] || [ -z "$1" ]; then
