@@ -2,7 +2,7 @@
 
 cd /content/company-dai/
 
-PORT=${PORT:-3100}
+PORT=${PORT:-3001}
 
 cleanup() {
     echo "Shutting down..."
@@ -41,10 +41,17 @@ if [ "$1" == "dev" ]; then
     sleep 3
     
     echo ""
-    echo "✓ Server running at http://localhost:3001"
+    echo "✓ Server running at http://localhost:$PORT"
     echo "✓ UI running at http://localhost:5173"
-    echo ""
     
+    if command -v cloudflared &> /dev/null; then
+        echo ""
+        echo "Starting Cloudflare tunnel..."
+        cloudflared tunnel --url http://localhost:$PORT &
+        TUNNEL_PID=$!
+    fi
+    
+    echo ""
     wait
 fi
 
@@ -58,9 +65,16 @@ if [ "$1" == "prod" ] || [ -z "$1" ]; then
     sleep 2
     
     echo ""
-    echo "✓ Server running at http://localhost:3001"
-    echo ""
+    echo "✓ Server running at http://localhost:$PORT"
     
+    if command -v cloudflared &> /dev/null; then
+        echo ""
+        echo "Starting Cloudflare tunnel..."
+        cloudflared tunnel --url http://localhost:$PORT &
+        TUNNEL_PID=$!
+    fi
+    
+    echo ""
     wait
 fi
 

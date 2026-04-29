@@ -1,5 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.join(__dirname, '..', '..', 'dist');
 
 import companiesRouter from './routes/companies.js';
 import agentsRouter from './routes/agents.js';
@@ -75,6 +81,16 @@ app.use('/api/documents', documentsRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/execution-workspaces', executionWorkspacesRouter);
 app.use('/api/cli-auth', cliAuthRouter);
+
+// Serve static files from dist
+app.use(express.static(distPath));
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(distPath, 'index.html'));
+  }
+});
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
