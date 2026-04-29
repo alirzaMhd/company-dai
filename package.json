@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"pnpm -F server dev\" \"pnpm -F ui dev\"",
-    "build": "pnpm -r build",
+    "build": "pnpm -r --filter='!@company-dai/ui' build && echo 'Note: UI runs in dev mode'",
     "typecheck": "pnpm -r typecheck --ignore-scripts",
     "test": "vitest",
     "db:generate": "pnpm -F @company-dai/db db:generate",
