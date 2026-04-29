@@ -20,6 +20,12 @@ import activityRouter from './routes/activity.js';
 import settingsRouter from './routes/settings.js';
 import dashboardRouter from './routes/dashboard.js';
 import skillsRouter from './routes/skills.js';
+import labelsRouter from './routes/labels.js';
+import joinRequestsRouter from './routes/join-requests.js';
+import assetsRouter from './routes/assets.js';
+import inboxRouter from './routes/inbox.js';
+import preferencesRouter from './routes/preferences.js';
+import eventsRouter from './routes/events.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,6 +56,12 @@ app.use('/api/activity', activityRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/skills', skillsRouter);
+app.use('/api/labels', labelsRouter);
+app.use('/api/join-requests', joinRequestsRouter);
+app.use('/api/assets', assetsRouter);
+app.use('/api/inbox', inboxRouter);
+app.use('/api/preferences', preferencesRouter);
+app.use('/api/events', eventsRouter);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);

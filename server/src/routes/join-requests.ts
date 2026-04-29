@@ -1,12 +1,11 @@
 import { Router } from 'express';
-import { z } from 'zod';
 
 const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const { companyId } = req.query;
-    res.json({ routines: [] });
+    const { companyId, status } = req.query;
+    res.json({ requests: [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -14,7 +13,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { name, cronExpression, issueId, agentId, enabled, triggers } = req.body;
+    const { companyId, email, message } = req.body;
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -24,18 +23,13 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    res.json({
-      id,
-      name: 'Routine',
-      enabled: true,
-      cronExpression: '* * * * *'
-    });
+    res.json({ id, status: 'pending', email: '' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-router.patch('/:id', async (req, res) => {
+router.post('/:id/approve', async (req, res) => {
   try {
     const { id } = req.params;
     res.json({ success: true });
@@ -44,28 +38,10 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.post('/:id/reject', async (req, res) => {
   try {
     const { id } = req.params;
     res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.post('/:id/trigger', async (req, res) => {
-  try {
-    const { id } = req.params;
-    res.json({ success: true, runId: crypto.randomUUID() });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.get('/:id/history', async (req, res) => {
-  try {
-    const { id } = req.params;
-    res.json({ history: [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

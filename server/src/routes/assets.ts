@@ -1,12 +1,11 @@
 import { Router } from 'express';
-import { z } from 'zod';
 
 const router = Router();
 
 router.get('/', async (req, res) => {
   try {
-    const { companyId } = req.query;
-    res.json({ routines: [] });
+    const { companyId, type, search } = req.query;
+    res.json({ assets: [] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -14,7 +13,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { name, cronExpression, issueId, agentId, enabled, triggers } = req.body;
+    const { companyId, name, type, category } = req.body;
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -24,21 +23,7 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    res.json({
-      id,
-      name: 'Routine',
-      enabled: true,
-      cronExpression: '* * * * *'
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.patch('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    res.json({ success: true });
+    res.json({ id, name: 'Asset', url: '' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -53,19 +38,10 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.post('/:id/trigger', async (req, res) => {
+router.get('/:id/download', async (req, res) => {
   try {
     const { id } = req.params;
-    res.json({ success: true, runId: crypto.randomUUID() });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.get('/:id/history', async (req, res) => {
-  try {
-    const { id } = req.params;
-    res.json({ history: [] });
+    res.json({ url: '' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
