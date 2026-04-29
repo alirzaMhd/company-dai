@@ -44,7 +44,7 @@ const mockAdapters: AdapterInfo[] = [
 router.get('/', async (req, res) => {
   try {
     res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
-    res.json({ adapters: mockAdapters });
+    res.json(mockAdapters);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

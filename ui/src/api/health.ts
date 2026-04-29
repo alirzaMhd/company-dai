@@ -28,7 +28,7 @@ export type HealthStatus = {
 
 export const healthApi = {
   get: async (): Promise<HealthStatus> => {
-    const res = await fetch("/api/health", {
+    const res = await fetch("/health", {
       credentials: "include",
       headers: { Accept: "application/json" },
     });
