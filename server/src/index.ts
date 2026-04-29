@@ -12,6 +12,14 @@ import approvalsRouter from './routes/approvals.js';
 import authRouter from './routes/auth.js';
 import routinesRouter from './routes/routines.js';
 import companySkillsRouter from './routes/company-skills.js';
+import filesRouter from './routes/files.js';
+import pluginsRouter from './routes/plugins.js';
+import secretsRouter from './routes/secrets.js';
+import mcpRouter from './routes/mcp.js';
+import activityRouter from './routes/activity.js';
+import settingsRouter from './routes/settings.js';
+import dashboardRouter from './routes/dashboard.js';
+import skillsRouter from './routes/skills.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,6 +42,14 @@ app.use('/api/approvals', approvalsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/routines', routinesRouter);
 app.use('/api/company-skills', companySkillsRouter);
+app.use('/api/files', filesRouter);
+app.use('/api/plugins', pluginsRouter);
+app.use('/api/secrets', secretsRouter);
+app.use('/api/mcp', mcpRouter);
+app.use('/api/activity', activityRouter);
+app.use('/api/settings', settingsRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/skills', skillsRouter);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
