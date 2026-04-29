@@ -288,10 +288,6 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
   }, [props]);
 
   // Fetch adapter models for the effective adapter type
-  const hasValidTunnelUrl =
-    adapterType === "opencode_remote" && 
-    /^wss:\/\//.test(effectiveAdapterConfig?.tunnelUrl?.toString().trim() ?? "");
-
   const {
     data: fetchedModels,
     error: fetchedModelsError,
@@ -300,7 +296,7 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
       ? queryKeys.agents.adapterModels(selectedCompanyId, adapterType, effectiveAdapterConfig)
       : ["agents", "none", "adapter-models", adapterType, effectiveAdapterConfig],
     queryFn: () => agentsApi.adapterModels(selectedCompanyId!, adapterType, effectiveAdapterConfig),
-    enabled: Boolean(selectedCompanyId) && hasValidTunnelUrl,
+    enabled: Boolean(selectedCompanyId) && Boolean(adapterType),
   });
   const models = fetchedModels ?? externalModels ?? [];
   const adapterCommandField =

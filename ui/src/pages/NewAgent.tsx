@@ -75,9 +75,6 @@ export function NewAgent() {
 
   const adapterConfig = useMemo(() => buildAdapterConfig(), [configValues]);
 
-  const hasValidTunnelUrl = configValues.adapterType === "opencode_remote" && 
-    /^wss:\/\//.test(configValues.tunnelUrl?.trim() ?? "");
-
   const {
     data: adapterModels,
     error: adapterModelsError,
@@ -88,7 +85,7 @@ export function NewAgent() {
       ? queryKeys.agents.adapterModels(selectedCompanyId, configValues.adapterType, adapterConfig)
       : ["agents", "none", "adapter-models", configValues.adapterType, adapterConfig],
     queryFn: () => agentsApi.adapterModels(selectedCompanyId!, configValues.adapterType, adapterConfig),
-    enabled: Boolean(selectedCompanyId) && hasValidTunnelUrl,
+    enabled: Boolean(selectedCompanyId) && Boolean(configValues.adapterType),
   });
 
   const { data: companySkills } = useQuery({
