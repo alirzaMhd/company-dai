@@ -39,7 +39,98 @@ const mockAdapters: AdapterInfo[] = [
       requiresMaterializedRuntimeSkills: false,
     },
   },
+  {
+    type: 'claude-local',
+    label: 'Claude Local',
+    source: 'builtin',
+    modelsCount: 3,
+    loaded: true,
+    disabled: false,
+    capabilities: {
+      supportsInstructionsBundle: true,
+      supportsSkills: true,
+      supportsLocalAgentJwt: true,
+      requiresMaterializedRuntimeSkills: false,
+    },
+  },
+  {
+    type: 'gemini-local',
+    label: 'Gemini Local',
+    source: 'builtin',
+    modelsCount: 1,
+    loaded: true,
+    disabled: false,
+    capabilities: {
+      supportsInstructionsBundle: false,
+      supportsSkills: false,
+      supportsLocalAgentJwt: false,
+      requiresMaterializedRuntimeSkills: false,
+    },
+  },
+  {
+    type: 'codex-local',
+    label: 'Codex Local',
+    source: 'builtin',
+    modelsCount: 1,
+    loaded: true,
+    disabled: false,
+    capabilities: {
+      supportsInstructionsBundle: true,
+      supportsSkills: true,
+      supportsLocalAgentJwt: false,
+      requiresMaterializedRuntimeSkills: false,
+    },
+  },
+  {
+    type: 'cursor-local',
+    label: 'Cursor Local',
+    source: 'builtin',
+    modelsCount: 1,
+    loaded: true,
+    disabled: false,
+    capabilities: {
+      supportsInstructionsBundle: false,
+      supportsSkills: false,
+      supportsLocalAgentJwt: false,
+      requiresMaterializedRuntimeSkills: false,
+    },
+  },
 ];
+
+interface ModelInfo {
+  id: string;
+  label: string;
+}
+
+function getMockModelsByType(type: string): ModelInfo[] {
+  const modelsByType: Record<string, ModelInfo[]> = {
+    'opencode-local': [
+      { id: 'openai/o1', label: 'OpenAI O1' },
+      { id: 'openai/o3', label: 'OpenAI O3' },
+      { id: 'anthropic/claude-4-sonnet', label: 'Anthropic Claude 4 Sonnet' },
+      { id: 'anthropic/claude-4-opus', label: 'Anthropic Claude 4 Opus' },
+      { id: 'google/gemini-2.5-pro', label: 'Google Gemini 2.5 Pro' },
+      { id: 'google/gemini-2.5-flash', label: 'Google Gemini 2.5 Flash' },
+      { id: 'xai/grok-2', label: 'xAI Grok 2' },
+      { id: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' },
+    ],
+    'claude-local': [
+      { id: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (May 14, 2025)' },
+      { id: 'claude-opus-4-20250514', label: 'Claude Opus 4 (May 14, 2025)' },
+      { id: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (Oct 22, 2024)' },
+    ],
+    'gemini-local': [
+      { id: 'gemini-2.5-pro-preview-05-20', label: 'Gemini 2.5 Pro Preview (May 20)' },
+    ],
+    'codex-local': [
+      { id: 'codex', label: 'Codex' },
+    ],
+    'cursor-local': [
+      { id: 'cursor-pro', label: 'Cursor Pro' },
+    ],
+  };
+  return modelsByType[type] ?? [];
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -129,6 +220,18 @@ router.post('/:companyId/adapters/:type/test-environment', async (req, res) => {
       ],
       testedAt: new Date().toISOString()
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get adapter models: /companies/:companyId/adapters/:type/models
+router.get('/:companyId/adapters/:type/models', async (req, res) => {
+  try {
+    const { companyId, type } = req.params;
+    console.log("[DEBUG] adapter-models:", { companyId, type });
+    const models = getMockModelsByType(type);
+    res.json(models);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
