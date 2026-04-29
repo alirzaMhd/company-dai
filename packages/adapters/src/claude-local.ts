@@ -1,0 +1,155 @@
+import { spawn, ChildProcess } from 'child_process';
+import { AgentAdapter, RunContext, RunResult, AgentConfig } from './types.js';
+
+export class ClaudeLocalAdapter implements AgentAdapter {
+  type = 'claude-local';
+  private process: ChildProcess | null = null;
+
+  constructor(public config: AgentConfig) {}
+
+  async execute(context: RunContext): Promise<RunResult> {
+    const startTime = Date.now();
+    
+    try {
+      const args = [
+        '--print', '-',
+        '--output-format', 'stream-json',
+        '--verbose'
+      ];
+
+      if (this.config.model) {
+        args.push('--model', this.config.model);
+      }
+
+      if (this.config.args) {
+        args.push(...this.config.args);
+      }
+
+      const prompt = this.buildPrompt(context);
+
+      const child = spawn(this.config.command || 'claude', args, {
+        cwd: context.workingDirectory,
+        env: { ...process.env, ...this.config.env },
+        timeout: this.config.timeout || 300000,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+
+      let output = '';
+      let errorOutput = '';
+
+      child.stdout?.on('data', (data) => {
+        output += data.toString();
+      });
+
+      child.stderr?.on('data', (data) => {
+        errorOutput += data.toString();
+      });
+
+      child.stdin?.write(prompt);
+      child.stdin?.end();
+
+      return new Promise((resolve) => {
+        child.on('close', (exitCode) => {
+          resolve({
+            success: exitCode === 0,
+            exitCode: exitCode || 0,
+            output,
+            error: errorOutput || undefined,
+            duration: Date.now() - startTime
+          });
+        });
+
+        child.on('error', (err) => {
+          resolve({
+            success: false,
+            exitCode: 1,
+            output,
+            error: err.message,
+            duration: Date.now() - startTime
+          });
+        });
+      });
+    } catch (error) {
+      return {
+        success: false,
+        exitCode: 1,
+        output: '',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: Date.now() - startTime
+      };
+    }
+  }
+
+  private buildPrompt(context: RunContext): string {
+    let prompt = '';
+    
+    if (context.heartbeatContext) {
+      const { issue, ancestors, project, goal } = context.heartbeatContext;
+      
+      if (ancestors.length > 0) {
+        prompt += `## Goal Hierarchy\n\n`;
+        for (const ancestor of ancestors) {
+          prompt += `- ${ancestor.identifier}: ${ancestor.title} (${ancestor.status})\n`;
+        }
+        prompt += '\n';
+      }
+
+      if (goal) {
+        prompt += `## Current Goal\n\n${goal.title}\n\n`;
+      }
+
+      if (project) {
+        prompt += `## Project\n\n${project.name}\n\n`;
+      }
+
+      prompt += `## Current Task\n\n`;
+      prompt += `**${issue.identifier}: ${issue.title}**\n`;
+      prompt += `Priority: ${issue.priority}\n`;
+      prompt += `Status: ${issue.status}\n\n`;
+    }
+
+    if (context.issueDescription) {
+      prompt += `## Description\n\n${context.issueDescription}\n\n`;
+    }
+
+    prompt += `## Instructions\n\n${context.instructions}\n\n`;
+
+    return prompt;
+  }
+
+  async detectModel(): Promise<string> {
+    try {
+      const child = spawn(this.config.command || 'claude', ['--version'], {
+        timeout: 10000
+      });
+
+      return new Promise((resolve) => {
+        let output = '';
+        child.stdout?.on('data', (data) => {
+          output += data.toString();
+        });
+        child.on('close', () => {
+          const match = output.match(/claude-[\w-]+/i);
+          resolve(match ? match[0] : 'claude');
+        });
+        child.on('error', () => {
+          resolve('claude');
+        });
+      });
+    } catch {
+      return 'claude';
+    }
+  }
+
+  async getCapabilities(): Promise<string[]> {
+    return [
+      'code-execution',
+      'file-operations',
+      'git-operations',
+      'terminal-commands',
+      'web-browsing',
+      'mcp-tools',
+      'edit-files'
+    ];
+  }
+}
