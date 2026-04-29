@@ -1,44 +1,21 @@
 {
-  "name": "opencode-manager",
+  "name": "company-dai",
   "version": "1.0.0",
-  "main": "src/server.js",
+  "private": true,
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:ui\"",
-    "dev:server": "node src/server.js",
-    "dev:ui": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev": "concurrently \"pnpm -F server dev\" \"pnpm -F ui dev\"",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest",
+    "db:generate": "pnpm -F @company-dai/db db:generate",
+    "db:migrate": "pnpm -F @company-dai/db db:migrate"
   },
-  "keywords": [
-    "opencode",
-    "agent",
-    "manager"
-  ],
+  "keywords": ["opencode", "agent", "manager", "paperclip"],
   "author": "",
   "license": "ISC",
-  "description": "OpenCode Agent Manager - Sync agents, skills, MCP, plugins across computers",
-  "dependencies": {
-    "@octokit/rest": "^22.0.1",
-    "chokidar": "^3.5.3",
-    "express": "^4.18.2",
-    "simple-git": "^3.22.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0",
-    "lucide-react": "^0.454.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.6.0"
-  },
+  "description": "Company-dai - Paperclip-style AI company control plane",
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^4.0.0",
-    "typescript": "^5.6.3",
-    "vite": "^6.0.0"
+    "concurrently": "^9.1.2",
+    "typescript": "^5.6.3"
   }
 }
