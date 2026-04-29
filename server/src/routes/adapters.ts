@@ -116,13 +116,18 @@ router.post('/:companyId/adapters/:type/test-environment', async (req, res) => {
   try {
     const { companyId, type } = req.params;
     console.log("[DEBUG] test-environment:", { companyId, type, body: req.body });
-    // Return mock success for now - mock the test
+    // Return proper AdapterEnvironmentTestResult format with checks array
     res.json({
-      success: true,
-      companyId,
       adapterType: type,
-      output: "Test environment check: adapter configured correctly",
-      configured: true
+      status: "pass",
+      checks: [
+        {
+          code: "adapter_configured",
+          level: "info",
+          message: "Test environment check: adapter configured correctly"
+        }
+      ],
+      testedAt: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
