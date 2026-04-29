@@ -70,10 +70,10 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/companies', companiesRouter);
+app.use('/api/companies', goalsRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/issues', issuesRouter);
 app.use('/api/projects', projectsRouter);
-app.use('/api/goals', goalsRouter);
 app.use('/api/heartbeat', heartbeatRouter);
 app.use('/api/costs', costsRouter);
 app.use('/api/approvals', approvalsRouter);
