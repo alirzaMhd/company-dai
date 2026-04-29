@@ -23,8 +23,9 @@ fi
 
 # Build only packages that compile successfully (skip server which uses tsx)
 if [ "$1" == "build" ] || [ "$1" == "prod" ] || [ -z "$1" ]; then
-    echo "Building packages..."
-    pnpm -r --filter='@company-dai/db' --filter='@company-dai/shared' --filter='@company-dai/adapters' build 2>/dev/null || true
+    echo "Building UI..."
+    cd ui && npx vite build 2>/dev/null || true
+    cd ..
     echo "✓ Build complete"
 fi
 
