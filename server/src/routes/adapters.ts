@@ -1,0 +1,113 @@
+import { Router } from 'express';
+
+const router = Router();
+
+const AdapterCapabilitiesSchema = {
+  supportsInstructionsBundle: false,
+  supportsSkills: false,
+  supportsLocalAgentJwt: false,
+  requiresMaterializedRuntimeSkills: false,
+};
+
+interface AdapterInfo {
+  type: string;
+  label: string;
+  source: "builtin" | "external";
+  modelsCount: number;
+  loaded: boolean;
+  disabled: boolean;
+  capabilities: typeof AdapterCapabilitiesSchema;
+  version?: string;
+  packageName?: string;
+  isLocalPath?: boolean;
+  overriddenBuiltin?: boolean;
+  overridePaused?: boolean;
+}
+
+const mockAdapters: AdapterInfo[] = [
+  {
+    type: 'opencode-local',
+    label: 'OpenCode Local',
+    source: 'builtin',
+    modelsCount: 1,
+    loaded: true,
+    disabled: false,
+    capabilities: {
+      supportsInstructionsBundle: true,
+      supportsSkills: true,
+      supportsLocalAgentJwt: true,
+      requiresMaterializedRuntimeSkills: false,
+    },
+  },
+];
+
+router.get('/', async (req, res) => {
+  try {
+    res.json({ adapters: mockAdapters });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/install', async (req, res) => {
+  try {
+    const { packageName, version, isLocalPath } = req.body;
+    res.json({
+      type: packageName,
+      packageName,
+      version,
+      installedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.delete('/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    res.json({ type, removed: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.patch('/:type', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { disabled } = req.body;
+    res.json({ type, disabled, changed: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.patch('/:type/override', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { paused } = req.body;
+    res.json({ type, paused, changed: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/:type/reload', async (req, res) => {
+  try {
+    const { type } = req.params;
+    res.json({ type, reloaded: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/:type/reinstall', async (req, res) => {
+  try {
+    const { type } = req.params;
+    res.json({ type, reinstalled: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;

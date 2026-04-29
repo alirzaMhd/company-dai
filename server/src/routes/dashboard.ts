@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 const router = Router();
 
-router.get('/dashboard', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { companyId } = req.query;
     res.json({

@@ -90,7 +90,7 @@ async function authPatch<T>(path: string, body: Record<string, unknown>, parse: 
 
 export const authApi = {
   getSession: async (): Promise<AuthSession | null> => {
-    const res = await fetch("/api/auth/get-session", {
+    const res = await fetch("/api/auth/session", {
       credentials: "include",
       headers: { Accept: "application/json" },
     });

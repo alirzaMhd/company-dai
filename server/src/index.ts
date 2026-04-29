@@ -39,6 +39,8 @@ import documentsRouter from './routes/documents.js';
 import githubRouter from './routes/github.js';
 import executionWorkspacesRouter from './routes/execution-workspaces.js';
 import cliAuthRouter from './routes/cli-auth.js';
+import adaptersRouter from './routes/adapters.js';
+import invitesRouter from './routes/invites.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -82,6 +84,8 @@ app.use('/api/documents', documentsRouter);
 app.use('/api/github', githubRouter);
 app.use('/api/execution-workspaces', executionWorkspacesRouter);
 app.use('/api/cli-auth', cliAuthRouter);
+app.use('/api/adapters', adaptersRouter);
+app.use('/api/invites', invitesRouter);
 
 // Serve static files from dist
 app.use(express.static(distPath));

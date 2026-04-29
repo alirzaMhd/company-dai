@@ -65,6 +65,104 @@ router.get('/:id/org', async (req, res) => {
   }
 });
 
+router.get('/:id/dashboard', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({
+      companyCount: 1,
+      agentCount: 0,
+      issueCount: 0,
+      activeRuns: 0,
+      totalCost: 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/agents', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ agents: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/issues', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ issues: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/projects', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ projects: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/activity', async (req, res) => {
+  try {
+    const { id } = req.query;
+    const limit = parseInt(req.query.limit as string) || 50;
+    res.json({ activities: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/user-directory', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ users: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/members', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ memberships: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/invites', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ invites: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/join-requests', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const status = req.query.status || 'pending_approval';
+    res.json({ joinRequests: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/:id/agent-configurations', async (req, res) => {
+  try {
+    const { id } = req.params;
+    res.json({ configurations: [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/:id/memberships', async (req, res) => {
   try {
     const { id } = req.params;
