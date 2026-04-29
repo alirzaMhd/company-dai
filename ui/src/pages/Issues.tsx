@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Plus, Search, Filter, LayoutGrid, List } from 'lucide-react';
-import IssueCard from '../components/IssueCard';
+import { IssueCard } from '../components/IssueCard';
 
 const statuses = ['backlog', 'todo', 'in_progress', 'in_review', 'blocked', 'done', 'cancelled'] as const;
 
