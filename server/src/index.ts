@@ -26,6 +26,9 @@ import assetsRouter from './routes/assets.js';
 import inboxRouter from './routes/inbox.js';
 import preferencesRouter from './routes/preferences.js';
 import eventsRouter from './routes/events.js';
+import interactionsRouter from './routes/interactions.js';
+import companyPortabilityRouter from './routes/company-portability.js';
+import documentsRouter from './routes/documents.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -62,6 +65,10 @@ app.use('/api/assets', assetsRouter);
 app.use('/api/inbox', inboxRouter);
 app.use('/api/preferences', preferencesRouter);
 app.use('/api/events', eventsRouter);
+app.use('/api/interactions', interactionsRouter);
+app.use('/api/companies/:id/export', companyPortabilityRouter);
+app.use('/api/companies/:id/import', companyPortabilityRouter);
+app.use('/api/documents', documentsRouter);
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
