@@ -23,7 +23,7 @@ fi
 
 if [ "$1" == "build" ] || [ "$1" == "prod" ] || [ -z "$1" ]; then
     echo "Building packages..."
-    pnpm -r build
+    pnpm -r --filter='!@company-dai/ui' build
     echo "✓ Build complete"
 fi
 
