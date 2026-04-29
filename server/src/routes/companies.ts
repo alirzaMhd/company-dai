@@ -1,32 +1,79 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { randomUUID } from 'crypto';
 
 const router = Router();
 
+const companies: Map<string, {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  issuePrefix: string;
+  issueCounter: number;
+  budgetMonthlyCents: number;
+  spentMonthlyCents: number;
+  requireBoardApprovalForNewAgents: boolean;
+  feedbackDataSharingEnabled: boolean;
+  feedbackDataSharingConsentAt: string | null;
+  feedbackDataSharingConsentByUserId: string | null;
+  feedbackDataSharingTermsVersion: string | null;
+  brandColor: string | null;
+  logoAssetId: string | null;
+  logoUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}> = new Map();
+
 const CreateCompanySchema = z.object({
   name: z.string().min(1),
-  budget: z.number().default(0),
-  branding: z.record(z.unknown()).optional()
+  description: z.string().optional(),
+  budgetMonthlyCents: z.number().default(0)
 });
 
 router.get('/', async (req, res) => {
   try {
     res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=300');
-    res.json({ companies: [] });
+    res.json({ companies: Array.from(companies.values()) });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 
 router.post('/', async (req, res) => {
   try {
     const data = CreateCompanySchema.parse(req.body);
-    res.json({ success: true, company: data });
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const issuePrefix = (data.name.toUpperCase().slice(0, 3) || 'CMP') + '1';
+    const company = {
+      id,
+      name: data.name,
+      description: data.description || null,
+      status: 'active',
+      issuePrefix,
+      issueCounter: 0,
+      budgetMonthlyCents: data.budgetMonthlyCents,
+      spentMonthlyCents: 0,
+      requireBoardApprovalForNewAgents: true,
+      feedbackDataSharingEnabled: false,
+      feedbackDataSharingConsentAt: null,
+      feedbackDataSharingConsentByUserId: null,
+      feedbackDataSharingTermsVersion: null,
+      brandColor: null,
+      logoAssetId: null,
+      logoUrl: null,
+      createdAt: now,
+      updatedAt: now
+    };
+    companies.set(id, company);
+    console.log("[DEBUG] Created company:", JSON.stringify(company));
+    res.status(201).json(company);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 
