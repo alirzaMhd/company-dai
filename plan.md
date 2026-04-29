@@ -92,19 +92,52 @@ Migrate from npm to pnpm and add Paperclip dependencies:
 Create tables matching Paperclip's V1 spec:
 
 ```typescript
-// companies - first-order entity
-// agents - with org structure (reports_to)
-// goals - hierarchical (company → team → agent → task)
-// projects - workspace for tasks
-// issues - tasks with parent/child hierarchy
+// companies - first-order entity with budget, status, branding
+// company_memberships - user/agent membership in companies
+// agents - AI agents with org hierarchy (reportsTo), adapter config
+// goals - hierarchical goal structure (company → team → agent)
+// projects - workspace containers
+// project_workspaces - development environments
+// issues - tasks with parent/child hierarchy, status, priority
 // issue_comments - threaded conversations
-// heartbeat_runs - agent execution history
-// cost_events - token/cost tracking
+// issue_documents - issue-attached documents
+// issue_labels, labels - labeling system
+// issue_relations - issue relationships (blockers)
+// issue_approvals - approval requests linked to issues
+// heartbeat_runs - agent execution history with events
+// cost_events - token/cost tracking per agent
+// budget_policies, budget_incidents - budget management
 // approvals - board governance
 // activity_log - audit trail
 // users - human operators
 // sessions - auth sessions
-// agent_api_keys - agent authentication
+// auth_users, auth_accounts, auth_verifications - user auth
+// company_api_keys - agent API key authentication
+// instance_settings - instance-level configuration
+// principal_permission_grants - fine-grained permissions
+// routines - scheduled recurring tasks
+// company_skills - company-specific skills
+// plugins - plugin registry
+// plugin_state, plugin_database - plugin data
+// plugin_jobs, plugin_webhooks - plugin scheduled jobs/webhooks
+// execution_workspaces - runtime execution environments
+// environments - environment configurations
+// environment_leases - environment lease/booking system
+// secrets - encrypted secret storage
+// auth_users, auth_sessions, auth_accounts, auth_verifications
+// activities_log - audit trail
+// assets - file/asset management
+// inbox_dismissals - inbox notification dismissals
+// issue_inbox_archives - issue inbox archiving
+// join_requests - company join requests
+// cli_auth_challenges - CLI authentication challenges
+// user_sidebar_preferences - user preferences
+// company_user_sidebar_preferences - company-level user preferences
+// company_logos - company branding
+// agent_config_revisions - agent configuration versioning
+// agent_runtime_state - agent runtime state
+// workspace_operations - workspace operations tracking
+// workspace_runtime_services - runtime services per workspace
 ```
 
 ### 2.2 Migrations
@@ -124,15 +157,32 @@ Create REST endpoints per domain:
 
 | Domain | Endpoints |
 |--------|----------|
-| companies | CRUD |
-| agents | CRUD, org tree, heartbeat |
+| companies | CRUD, memberships |
+| agents | CRUD, org tree, heartbeat, skills/sync, instructions |
 | goals | CRUD, hierarchy |
-| projects | CRUD |
-| issues | CRUD, checkout, comments |
-| heartbeat | invoke, status |
+| projects | CRUD, workspaces |
+| issues | CRUD, checkout, comments, documents, relations, labels, heartbeat-context |
+| heartbeat | invoke, status, runs |
 | costs | events, rollups |
 | approvals | request, decide |
 | auth | login, logout, sessions |
+| routines | CRUD, triggers |
+| company-skills | CRUD, sync |
+| plugins | CRUD, enable, config, api routes |
+| secrets | CRUD, inject |
+| documents | upload, download, revisions |
+| execution-workspaces | CRUD, operations |
+| dashboard | metrics |
+| activity | log, search, export |
+| github | fetch, sync |
+| mcp | tools, resources, prompts |
+| assets | upload, download, library |
+| inbox | notifications, dismissals |
+| join-requests | submit, review, approve |
+| cli-auth | challenges, verify |
+| preferences | user, company |
+| backups | create, restore, list |
+| llms | config, pricing |
 
 ### 3.2 Services
 
@@ -172,7 +222,12 @@ Create Paperclip-style pages:
 | Approvals | Pending approvals |
 | Costs | Budget tracking |
 | Routines | Scheduled tasks |
-| Settings | Instance/company settings |
+| Assets | Asset library |
+| Inbox | Notifications |
+| Join Requests | Join request queue |
+| Preferences | User preferences |
+| Backups | Database backups |
+| LLMs | LLM configuration |
 
 ### 4.2 Components
 
@@ -184,6 +239,12 @@ Build reusable UI:
 - RunTranscript
 - BudgetMeter
 - ApprovalCard
+- AssetCard, AssetUploader
+- NotificationItem
+- JoinRequestCard
+- PreferenceToggle
+- BackupCard
+- LLMConfigCard
 
 ### 4.3 Routing
 
@@ -202,7 +263,13 @@ Build reusable UI:
 /approvals           → Approvals
 /costs               → Cost tracking
 /routines            → Scheduled routines
-/settings            → Settings
+/assets              → Asset library
+/inbox               → User inbox
+/join-requests      → Join requests queue
+/preferences        → User preferences
+/backups            → Database backups
+/llms               → LLM configuration
+/settings           → Settings
 ```
 
 ---
@@ -232,11 +299,23 @@ Implement:
 | opencode-local | process | Local OpenCode process |
 | claude-local | process | Claude Code CLI |
 | codex-local | process | Codex CLI |
+| cursor-local | process | Cursor CLI |
+| gemini-local | process | Gemini CLI |
+| pi-local | process | Pieces CLI |
+| openclaw-gateway | http | OpenClaw Gateway |
+| openrouter | http | OpenRouter API |
 | http | webhook | External HTTP agent |
 
 ### 5.3 Adapter Configuration
 
 UI for configuring adapters per agent type with env injection.
+
+### 5.4 Adapter Plugins
+
+Support plugin-based adapters:
+- External adapter discovery
+- Adapter configuration UI
+- Runtime adapter loading
 
 ---
 
@@ -294,25 +373,574 @@ Approval types:
 
 ---
 
-## Phase 9: Plugins (packages/plugins)
+## Phase 9: Execution Workspaces
 
-### 9.1 Plugin System
+### 9.1 Execution Workspace System
 
-Add plugin framework:
-- Plugin SDK
-- Lifecycle hooks
-- Scoped API access
+Implement isolated runtime environments for agent execution:
+
+```
+packages/execution-workspace/
+├── src/
+│   ├── index.ts           # Entry point
+│   ├── workspace-runtime.ts  # Runtime service supervisor
+│   ├── operations.ts     # File ops, port management
+│   └── types.ts         # Workspace types
+```
+
+Key features:
+- Isolated execution environments per workspace
+- Service supervisor management
+- File operations and port management
+- Environment leasing/locking
+- Runtime persistence
 
 ---
 
-## Phase 10: Skills System
+## Phase 10: Plugins (packages/plugins)
 
-### 10.1 Company Skills
+### 10.1 Plugin System
 
-Add skill management:
-- Skill registry
-- Runtime skill injection
-- Skill sync
+Add comprehensive plugin framework:
+
+```
+packages/plugins/
+├── sdk/
+│   ├── src/
+│   │   ├── define-plugin.ts    # Plugin definition
+│   │   ├── context.ts        # Context API
+│   │   ├── capabilities.ts  # Capability system
+│   │   ├── types.ts         # Plugin types
+│   └── ui/
+│       ├── slots.tsx       # UI slot system
+│       ├── launchers.ts     # Action launchers
+│       └── hooks.ts         # Plugin hooks
+```
+
+**Plugin Definition**:
+```typescript
+interface Plugin {
+  key: string;
+  name: string;
+  version: string;
+  capabilities: string[];
+  setup(ctx: PluginContext): Promise<void>;
+  onHealth?: () => Promise<void>;
+  onConfigChanged?: (config: any) => void;
+  onShutdown?: () => Promise<void>;
+  onValidateConfig?: (config: any) => ValidationResult;
+}
+```
+
+**Lifecycle Hooks**:
+- `setup`: Plugin initialization
+- `onHealth`: Health check
+- `onConfigChanged`: Config update handler
+- `onShutdown`: Cleanup on disable
+- `onValidateConfig`: Config validation
+
+**Context APIs**:
+- `events`: Subscribe/emit domain events
+- `jobs`: Register scheduled jobs
+- `data`: Register data providers
+- `actions`: Register actions
+- `tools`: Register tools
+- `streams`: Real-time streaming (SSE)
+- `http`: Outbound HTTP
+- `secrets`: Secret access
+- `state`: Plugin state storage
+- `entities`: CRUD on domain entities
+- `agents`: Invoke agents, manage sessions
+
+**UI Integration**:
+
+Slots:
+- `page`, `sidebar`, `sidebarPanel`, `settingsPage`
+- `dashboardWidget`, `detailTab`, `taskDetailView`
+- `toolbarButton`, `commentAnnotation`
+
+Launchers:
+- `navigate`, `openModal`, `openDrawer`
+
+### 10.2 Plugin Database Namespaces
+
+Plugins can have their own PostgreSQL namespace:
+- Migration support per plugin
+- Isolated data storage
+- Schema management
+
+### 10.3 Scoped API Routes
+
+Custom API routes under `/api/plugins/:pluginId/api/*`
+
+---
+
+## Phase 11: Skills System
+
+### 11.1 Company Skills
+
+```
+packages/company-skills/
+├── src/
+│   ├── registry.ts       # Skill registry
+│   ├── sync.ts         # Skill sync to agents
+│   └── types.ts        # Skill types
+```
+
+```
+skills/
+├── paperclip/          # Core Paperclip skill
+├── para-memory-files/  # Memory skill
+└── ...
+```
+
+Skill structure:
+- `key`: Unique identifier
+- `slug`: URL-friendly slug
+- `name`: Display name
+- `description`: What the skill does
+- `markdown`: Skill instructions
+- `sourceType`: local_path | git | npm
+- `trustLevel`: markdown_only | full_access
+- `fileInventory`: Asset tracking
+
+Skill sync: `POST /api/agents/:id/skills/sync`
+
+### 11.2 Agent Instructions
+
+Managed instructions bundle system for agents:
+- Instruction versions
+- Instruction templates
+- Runtime instruction injection
+
+---
+
+## Phase 12: Company Portability
+
+### 12.1 Import/Export System
+
+Full company data export/import:
+- Company entity
+- Goals hierarchy
+- Projects
+- Issues with history
+- Agents configuration
+- Settings
+
+Export format:
+```typescript
+interface CompanyExport {
+  version: string;
+  exportedAt: Date;
+  company: Company;
+  goals: Goal[];
+  projects: Project[];
+  issues: Issue[];
+  agents: Agent[];
+  settings: Settings;
+}
+```
+
+### 12.2 Data Redaction
+
+Support for redacting sensitive data on export:
+- Mask API keys
+- Redact secrets
+- Filter user data
+
+---
+
+## Phase 13: Secrets Management
+
+### 13.1 Encrypted Secret Storage
+
+```
+packages/secrets/
+├── src/
+│   ├── provider.ts      # Secret provider interface
+│   ├── local.ts        # Local encrypted provider
+│   └── types.ts        # Secret types
+```
+
+Features:
+- Master key encryption
+- Encrypted at rest
+- Per-company isolation
+- Secret versioning
+
+### 13.2 Secret Injection
+
+Runtime secret injection into:
+- Agent execution contexts
+- Execution workspaces
+- Plugin environments
+
+---
+
+## Phase 14: Documents & Revisions
+
+### 14.1 Issue Documents
+
+Documents attached to issues:
+- Plans, specs, design docs
+- Revision history
+- Version tracking
+
+### 14.2 Document Management
+
+```
+packages/documents/
+├── src/
+│   ├── storage.ts      # Document storage
+│   ├── revisions.ts   # Revision tracking
+│   └── types.ts        # Document types
+```
+
+Features:
+- Upload/download
+- Revision history
+- Diff viewing
+- Access control
+
+---
+
+## Phase 15: Issue Enhancements
+
+### 15.1 Labels System
+
+```
+services/labels/
+├── src/
+│   ├── labels.ts       # Label CRUD
+│   └── types.ts       # Label types
+```
+
+- Issue labels
+- Global labels
+- Label colors
+- Label filtering
+
+### 15.2 Issue Relations
+
+Issue relationships:
+- Blockers
+- Relates to
+- Duplicates
+- Hierarchy visualization
+
+### 15.3 Thread Interactions
+
+Sophisticated issue interactions:
+- Activity stream
+- Status change tracking
+- Assignment history
+
+---
+
+## Phase 16: Routines (Expanded)
+
+### 16.1 Scheduled Recurring Tasks
+
+```
+services/routines/
+├── src/
+│   ├── scheduler.ts    # Cron scheduler
+│   ├── triggers.ts    # Trigger handlers
+│   └── concurrency.ts # Concurrency policies
+```
+
+Features:
+- Cron-based scheduling
+- Multiple triggers (webhook, schedule, event)
+- Concurrency policies (prevent, allow, queue)
+- Routine templates
+- Full task context passing
+
+### 16.2 Wake-up Requests
+
+Formal agent wake-up scheduling:
+- Request queue
+- Priority handling
+- Scheduling policies
+
+---
+
+## Phase 17: Feedback System
+
+### 17.1 Voting & Reactions
+
+```
+services/feedback/
+├── src/
+│   ├── voting.ts      # Vote system
+│   ├── reactions.ts   # Reaction system
+│   └── types.ts       # Feedback types
+```
+
+- Upvote/downvote
+- Reactions
+- Vote aggregation
+
+### 17.2 Export & Sharing
+
+- Export feedback data
+- Share links with access control
+- Redaction tools
+
+---
+
+## Phase 18: CRM System
+
+### 18.1 Basic CRM
+
+```
+services/crm/
+├── src/
+│   ├── accounts.ts    # Account management
+│   ├── contacts.ts    # Contact management
+│   └── interactions.ts # Interaction tracking
+```
+
+- Accounts
+- Contacts
+- Interaction history
+- Activity tracking
+
+---
+
+## Phase 19: Finance Events
+
+### 19.1 Financial Tracking
+
+```
+services/finance/
+├── src/
+│   ├── events.ts      # Financial events
+│   ├── reporting.ts   # Financial reports
+│   └── types.ts       # Finance types
+```
+
+- Revenue tracking
+- Expense tracking
+- Financial reports
+- Budget vs actual
+
+---
+
+## Phase 20: GitHub Integration
+
+### 20.1 GitHub Fetch
+
+```
+services/github/
+├── src/
+│   ├── fetch.ts      # GitHub fetch
+│   ├── sync.ts       # Repository sync
+│   └── types.ts      # GitHub types
+```
+
+- Repository listing
+- Issue sync
+- PR sync
+- Commit tracking
+
+---
+
+## Phase 21: MCP Server
+
+### 21.1 Model Context Protocol
+
+Implement MCP server support:
+- MCP protocol handler
+- Tool definitions
+- Resource handlers
+- Prompt templates
+
+---
+
+## Phase 22: Instance Settings
+
+### 22.1 Global Configuration
+
+```
+services/instance/
+├── src/
+│   ├── settings.ts   # Instance settings
+│   ├── config.ts     # Configuration
+│   └── types.ts      # Instance types
+```
+
+- Instance ID
+- Deployment mode
+- Exposure settings
+- Branding
+- Default permissions
+
+---
+
+## Phase 23: Activity Log
+
+### 23.1 Audit Trail
+
+Comprehensive activity logging:
+- User actions
+- Agent actions
+- System events
+- Search/filter
+- Export
+
+---
+
+## Phase 24: Company Memberships
+
+### 24.1 User/Agent Membership
+
+```
+services/membership/
+├── src/
+│   ├── memberships.ts # Membership management
+│   ├── roles.ts      # Role management
+│   └── types.ts      # Membership types
+```
+
+- Company memberships
+- Role-based access
+- Permission grants
+- Invite system
+
+---
+
+## Phase 25: Assets System
+
+### 25.1 File/Asset Management
+
+```
+services/assets/
+├── src/
+│   ├── storage.ts    # Asset storage
+│   ├── upload.ts     # Upload handling
+│   ├── types.ts     # Asset types
+```
+
+- File upload/download
+- Asset categorization
+- Asset library
+- Asset usage tracking
+- Separate from issue attachments
+
+---
+
+## Phase 26: Inbox System
+
+### 26.1 User Inbox
+
+```
+services/inbox/
+├── src/
+│   ├── notifications.ts # Notification handling
+│   ├── dismissals.ts   # Dismissal management
+│   ├── archives.ts   # Archive management
+│   └── types.ts     # Inbox types
+```
+
+- User notifications
+- Inbox dismissals
+- Issue inbox archiving
+- Notification preferences
+
+---
+
+## Phase 27: Join Request Queue
+
+### 27.1 Company Join Requests
+
+```
+services/join-requests/
+├── src/
+│   ├── requests.ts   # Join request management
+│   └── types.ts     # Join request types
+```
+
+- Agent application process
+- Join request review
+- Approval workflow
+- Invitation system
+
+---
+
+## Phase 28: CLI Authentication
+
+### 28.1 CLI-based Auth
+
+```
+services/cli-auth/
+├── src/
+│   ├── challenges.ts # Authentication challenges
+│   ├── verify.ts   # Challenge verification
+│   └── types.ts    # CLI auth types
+```
+
+- CLI authentication challenges
+- Board access via CLI
+- Session management
+- Device verification
+
+---
+
+## Phase 29: User Preferences
+
+### 29.1 Sidebar Preferences
+
+```
+services/preferences/
+├── src/
+│   ├── user.ts     # User-level preferences
+│   ├── company.ts  # Company-level user preferences
+│   └── types.ts    # Preference types
+```
+
+- User sidebar preferences
+- Company user preferences
+- UI customization per user
+- Layout persistence
+
+---
+
+## Phase 30: Instance Database Backups
+
+### 30.1 Automated Backups
+
+```
+services/backups/
+├── src/
+│   ├── scheduler.ts # Backup scheduler
+│   ├── storage.ts  # Backup storage
+│   └── types.ts    # Backup types
+```
+
+- Automated database backups
+- Backup scheduling
+- Backup retention policies
+- Restore functionality
+
+---
+
+## Phase 31: LLMs Management
+
+### 31.1 LLM Configuration
+
+```
+services/llms/
+├── src/
+│   ├── config.ts    # LLM configuration
+│   ├── pricing.ts  # Model pricing
+│   └── types.ts    # LLM types
+```
+
+- Model selection
+- Pricing configuration
+- Provider management
+- Usage tracking per model
 
 ---
 
@@ -346,7 +974,9 @@ Add skill management:
 
 1. Create adapter interface
 2. Implement OpenCode adapter
-3. Add UI config
+3. Implement additional adapters (Claude, Codex, Cursor, Gemini, etc.)
+4. Add adapter plugins support
+5. Add UI config
 
 ### Step 6: Heartbeat
 
@@ -365,6 +995,119 @@ Add skill management:
 1. Approval system
 2. Board actions
 3. Activity logging
+
+### Step 9: Execution Workspaces
+
+1. Implement workspace runtime
+2. Add environment management
+3. Add workspace leasing
+
+### Step 10: Plugins
+
+1. Create plugin SDK
+2. Implement lifecycle hooks
+3. Add UI slot system
+4. Add capabilities system
+5. Implement database namespaces
+6. Add scoped API routes
+
+### Step 11: Skills
+
+1. Create skill registry
+2. Implement skill sync
+3. Add agent instructions system
+
+### Step 12: Secrets
+
+1. Implement encrypted secret storage
+2. Add secret injection
+
+### Step 13: Documents
+
+1. Implement document management
+2. Add revision tracking
+
+### Step 14: Issue Enhancements
+
+1. Add labels system
+2. Add issue relations
+3. Add thread interactions
+
+### Step 15: Routines (Expanded)
+
+1. Implement cron scheduler
+2. Add wake-up requests
+
+### Step 16: Feedback
+
+1. Add voting system
+2. Add export/sharing
+
+### Step 17: CRM
+
+1. Add accounts/contacts management
+2. Add interaction tracking
+
+### Step 18: Finance
+
+1. Add financial event tracking
+
+### Step 19: GitHub Integration
+
+1. Add GitHub fetch
+2. Add repo sync
+
+### Step 20: MCP Server
+
+1. Implement MCP protocol
+
+### Step 21: Instance Settings
+
+1. Add global configuration
+
+### Step 22: Activity Log
+
+1. Implement audit trail
+
+### Step 23: Company Memberships
+
+1. Add membership management
+2. Add invite system
+
+### Step 24: Assets
+
+1. Add file/asset management
+2. Add asset library
+
+### Step 25: Inbox
+
+1. Add notification system
+2. Add dismissals/archive
+
+### Step 26: Join Requests
+
+1. Add join request queue
+2. Add approval workflow
+
+### Step 27: CLI Authentication
+
+1. Add CLI auth challenges
+2. Add verification system
+
+### Step 28: User Preferences
+
+1. Add sidebar preferences
+2. Add company preferences
+
+### Step 29: Instance Backups
+
+1. Add backup scheduler
+2. Add restore functionality
+
+### Step 30: LLMs Management
+
+1. Add LLM configuration
+2. Add pricing management
 
 ---
 
@@ -386,3 +1129,5 @@ pnpm build          # Full build
 - Keep existing data/ agents.json format for initial seed
 - Adapt specific paths and imports from Paperclip to company-dai
 - Use Paperclip's doc/SPEC-implementation.md as reference for exact field definitions
+- Phases 9-24 cover additional features discovered in Paperclip codebase
+- Priority: Core features (1-8) first, then phase 9 onwards for advanced features
