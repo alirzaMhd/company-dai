@@ -373,3 +373,15 @@ export const pluginSecretsService = {
   set: async (pluginId: string, key: string, value: string) => true,
   delete: async (pluginId: string, key: string) => true,
 };
+
+// Import new services
+export { instanceSettingsService } from "./instance-settings.js";
+export { sidebarBadgeService } from "./sidebar-badges.js";
+export { sidebarPreferenceService } from "./sidebar-preferences.js";
+export { inboxDismissalService } from "./inbox-dismissals.js";
+
+// Activity logging helper
+export const logActivity = async (companyId: string, actorId: string, action: string, details?: any) => {
+  // Simple activity logging - can be expanded later
+  console.log(`[ACTIVITY] ${companyId} ${actorId} ${action}`, details);
+};
