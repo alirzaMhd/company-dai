@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { toNodeHandler } from "better-auth/node";
 import { db } from "../lib/db.js";
 import { config } from "../config.js";
 import {
@@ -8,6 +9,8 @@ import {
   authAccounts,
   authVerifications,
 } from "@company-dai/db/schema";
+
+const baseUrl = process.env.BETTER_AUTH_URL || `http://${config.host}`;
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -19,16 +22,19 @@ export const auth = betterAuth({
       verification: authVerifications,
     },
   }),
+  baseURL: baseUrl,
   secret: config.authSecret,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
   },
-  trustedOrigins: [`http://${config.host}`, `https://${config.host}`],
+  trustedOrigins: [baseUrl, `http://localhost:${config.port}`, `https://localhost:${config.port}`],
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
 });
+
+export const authHandler = toNodeHandler(auth);
 
 export type Auth = typeof auth;

@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import compression from 'compression';
 import { authMiddleware } from './middleware/auth.js';
-import { config } from './config.js';
+import { config, isAuthenticated } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,6 +77,14 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Mount better-auth handler in authenticated mode
+if (isAuthenticated()) {
+  const { authHandler } = await import('./auth/better-auth.js');
+  app.use('/api/auth', authHandler);
+} else {
+  app.use('/api/auth', authRouter);
+}
+
 app.use('/api/companies', companiesRouter);
 app.use('/api/companies', adaptersRouter);
 app.use('/api/companies', goalsRouter);
@@ -86,7 +94,6 @@ app.use('/api/projects', projectsRouter);
 app.use('/api/heartbeat', heartbeatRouter);
 app.use('/api/costs', costsRouter);
 app.use('/api/approvals', approvalsRouter);
-app.use('/api/auth', authRouter);
 app.use('/api/routines', routinesRouter);
 app.use('/api/company-skills', companySkillsRouter);
 app.use('/api/files', filesRouter);
