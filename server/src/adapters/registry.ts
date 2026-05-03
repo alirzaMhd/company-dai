@@ -741,7 +741,6 @@ export async function listAdapterModels(
   type: string,
   config?: Record<string, unknown>,
 ): Promise<{ id: string; label: string }[]> {
-  // Check cache first
   const cacheKey = type;
   const cached = modelCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) {
@@ -751,19 +750,7 @@ export async function listAdapterModels(
   const adapter = adaptersByType.get(type);
   if (!adapter) return [];
 
-  // Use static models directly without calling external CLI
-  // This avoids the 30s timeout issue
-  const staticModels = adapter.models ?? [];
-  if (staticModels.length > 0) {
-    // Cache the results
-    modelCache.set(cacheKey, {
-      models: staticModels,
-      expiresAt: Date.now() + MODEL_CACHE_TTL_MS,
-    });
-    return staticModels;
-  }
-
-  // Only try dynamic listing if no static models available
+  // Try dynamic model listing first (runs CLI to discover real models)
   if (adapter.listModels) {
     try {
       const discovered = await Promise.resolve(adapter.listModels(config));
@@ -775,8 +762,18 @@ export async function listAdapterModels(
         return discovered;
       }
     } catch {
-      // Fall through to return empty
+      // Fall through to static models
     }
+  }
+
+  // Fall back to static models if dynamic listing failed or isn't available
+  const staticModels = adapter.models ?? [];
+  if (staticModels.length > 0) {
+    modelCache.set(cacheKey, {
+      models: staticModels,
+      expiresAt: Date.now() + MODEL_CACHE_TTL_MS,
+    });
+    return staticModels;
   }
 
   return [];
