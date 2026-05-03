@@ -17,6 +17,11 @@ trap cleanup EXIT INT TERM
 
 echo "=== Company-dai Setup ==="
 
+if ! command -v curl &> /dev/null; then
+    echo "Installing curl..."
+    apt-get update && apt-get install -y curl
+fi
+
 if ! command -v node &> /dev/null; then
     echo "Installing Node.js..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
