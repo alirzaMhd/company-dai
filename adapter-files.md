@@ -215,3 +215,31 @@
 - /content/custom-paperclip/packages/adapters/pi-local/src/ui/index.ts
 - /content/custom-paperclip/packages/adapters/pi-local/src/ui/parse-stdout.ts
 - /content/custom-paperclip/packages/adapters/pi-local/src/index.ts
+
+## Onboarding Files
+
+### Frontend
+- /content/custom-paperclip/ui/src/components/Layout.tsx (onboardingTriggered)
+- /content/custom-paperclip/ui/src/components/OnboardingWizard.tsx
+- /content/custom-paperclip/ui/src/context/DialogContext.tsx (onboardingOpen, onboardingOptions)
+- /content/custom-paperclip/ui/src/lib/onboarding-goal.ts
+- /content/custom-paperclip/ui/src/lib/onboarding-goal.test.ts
+- /content/custom-paperclip/ui/src/lib/onboarding-launch.ts
+- /content/custom-paperclip/ui/src/lib/onboarding-launch.test.ts
+- /content/custom-paperclip/ui/src/lib/onboarding-route.ts
+- /content/custom-paperclip/ui/src/lib/onboarding-route.test.ts
+- /content/custom-paperclip/ui/src/pages/CompanyInvites.test.tsx
+- /content/custom-paperclip/ui/src/pages/CompanySettings.tsx (onboarding management)
+- /content/custom-paperclip/ui/src/pages/InviteLanding.tsx (onboardingTextUrl)
+- /content/custom-paperclip/ui/src/pages/InviteUxLab.tsx (onboarding testing)
+- /content/custom-paperclip/ui/src/api/access.ts (onboarding API calls)
+
+### Backend
+- /content/custom-paperclip/server/src/__tests__/invite-onboarding-text.test.ts
+- /content/custom-paperclip/server/src/__tests__/openclaw-invite-prompt-route.test.ts
+- /content/custom-paperclip/server/src/routes/access.ts (onboarding endpoints at lines 3070-3110)
+- /content/custom-paperclip/tests/e2e/onboarding.spec.ts
+- /content/custom-paperclip/tests/release-smoke/docker-auth-onboarding.spec.ts
+- /content/custom-paperclip/ui/storybook/stories/overview.stories.tsx (onboarding mention)
+- /content/custom-paperclip/ui/storybook/stories/data-viz-misc.stories.tsx (onboarding mention)
+- /content/custom-paperclip/ui/src/App.tsx (OnboardingRoutePage component)
