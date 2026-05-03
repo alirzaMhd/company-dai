@@ -1,5 +1,5 @@
-import type { AdapterModel } from "@company-dai/adapter-utils";
-import { asString, parseObject } from "@company-dai/adapter-utils/server-utils";
+import type { AdapterModel } from "../../adapter-utils/dist/index.js";
+import { asString, parseObject } from "../../adapter-utils/dist/server-utils.js";
 import WebSocket from "ws";
 import { MODELS_CACHE } from "./execute.js";
 

@@ -6,14 +6,14 @@ import type {
   AdapterSessionCodec,
   AdapterEnvironmentCheck,
   AdapterEnvironmentCheckLevel,
-} from "@company-dai/adapter-utils";
+} from "../../adapter-utils/dist/index.js";
 import {
   asString,
   asNumber,
   asStringArray,
   parseObject,
   DEFAULT_PAPERCLIP_AGENT_PROMPT_TEMPLATE,
-} from "@company-dai/adapter-utils/server-utils";
+} from "../../adapter-utils/dist/server-utils.js";
 import WebSocket from "ws";
 
 interface OpenCodeRemoteConfig {
@@ -352,7 +352,7 @@ export async function execute(
       const value = templateData[key as keyof typeof templateData];
       return typeof value === "object" ? JSON.stringify(value) : String(value ?? "");
     })
-    .replace(/\{\{(\w+)\.(\w+))\}\}/g, (_, path, field) => {
+    .replace(/\{\{(\w+)\.(\w+)\}\}/g, (_, path, field) => {
       const obj = templateData[path as keyof typeof templateData];
       return obj?.[field] ?? "";
     });

@@ -4,14 +4,14 @@ import path from "node:path";
 import type {
   AdapterSkillContext,
   AdapterSkillSnapshot,
-} from "@company-dai/adapter-utils";
+} from "../../adapter-utils/dist/index.js";
 import {
   buildPersistentSkillSnapshot,
   ensurePaperclipSkillSymlink,
   readPaperclipRuntimeSkillEntries,
   readInstalledSkillTargets,
   resolvePaperclipDesiredSkillNames,
-} from "@company-dai/adapter-utils/server-utils";
+} from "../../adapter-utils/dist/server-utils.js";
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;

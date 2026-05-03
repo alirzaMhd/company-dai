@@ -1,5 +1,5 @@
 {
-  "name": "@company-dai/adapter-opencode-remote",
+  "name": "@company-dai/adapters/opencode-remote",
   "version": "1.0.0",
   "license": "MIT",
   "type": "module",

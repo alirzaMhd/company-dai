@@ -1,4 +1,4 @@
-import type { AdapterModel, AdapterSessionCodec } from "@company-dai/adapter-utils";
+import type { AdapterModel, AdapterSessionCodec } from "../../adapter-utils/dist/index.js";
 
 function readNonEmptyString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
