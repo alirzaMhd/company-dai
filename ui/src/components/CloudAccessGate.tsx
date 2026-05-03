@@ -14,6 +14,13 @@ export function CloudAccessGate() {
 
   const isAuthenticatedMode = healthQuery.data?.deploymentMode === "authenticated";
 
+  const sessionQuery = useQuery({
+    queryKey: queryKeys.auth.session,
+    queryFn: () => authApi.getSession(),
+    enabled: isAuthenticatedMode,
+    retry: false,
+  });
+
   if (healthQuery.isLoading) {
     return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
   }
@@ -26,21 +33,9 @@ export function CloudAccessGate() {
     );
   }
 
-  if (isAuthenticatedMode) {
-    const sessionQuery = useQuery({
-      queryKey: queryKeys.auth.session,
-      queryFn: () => authApi.getSession(),
-      retry: false,
-    });
-
-    if (sessionQuery.isLoading) {
-      return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
-    }
-
-    if (!sessionQuery.data) {
-      const next = encodeURIComponent(`${location.pathname}${location.search}`);
-      return <Navigate to={`/auth?next=${next}`} replace />;
-    }
+  if (isAuthenticatedMode && !sessionQuery.data) {
+    const next = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <Navigate to={`/auth?next=${next}`} replace />;
   }
 
   return <Outlet />;
