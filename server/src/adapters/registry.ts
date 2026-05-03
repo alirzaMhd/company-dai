@@ -36,22 +36,9 @@ const opencodeLocalModels: AdapterModel[] = [
 ];
 
 async function listOpenCodeModels(_config?: Record<string, unknown>): Promise<AdapterModel[]> {
-  try {
-    const { stdout } = await execAsync('opencode models', { timeout: 30000 });
-    const models: AdapterModel[] = [];
-    for (const line of stdout.trim().split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      if (trimmed.includes('/')) {
-        const modelId = trimmed;
-        const label = modelId.split('/').pop() || modelId;
-        models.push({ id: modelId, label });
-      }
-    }
-    return models.length > 0 ? models : opencodeLocalModels;
-  } catch {
-    return opencodeLocalModels;
-  }
+  // Return static models immediately without calling external CLI
+  // This avoids the 30s timeout issue
+  return opencodeLocalModels;
 }
 
 async function testOpenCodeEnvironment(ctx: { companyId: string; adapterType: string; config: Record<string, unknown> }): Promise<AdapterEnvironmentTestResult> {
@@ -700,6 +687,10 @@ function registerBuiltInAdapters() {
 
 registerBuiltInAdapters();
 
+// Simple in-memory cache for adapter models
+const modelCache = new Map<string, { models: { id: string; label: string }[]; expiresAt: number }>();
+const MODEL_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 export function getServerAdapter(type: string): ServerAdapterModule | undefined {
   return adaptersByType.get(type);
 }
@@ -716,13 +707,45 @@ export async function listAdapterModels(
   type: string,
   config?: Record<string, unknown>,
 ): Promise<{ id: string; label: string }[]> {
+  // Check cache first
+  const cacheKey = type;
+  const cached = modelCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.models;
+  }
+
   const adapter = adaptersByType.get(type);
   if (!adapter) return [];
-  if (adapter.listModels) {
-    const discovered = await adapter.listModels(config);
-    if (discovered.length > 0) return discovered;
+
+  // Use static models directly without calling external CLI
+  // This avoids the 30s timeout issue
+  const staticModels = adapter.models ?? [];
+  if (staticModels.length > 0) {
+    // Cache the results
+    modelCache.set(cacheKey, {
+      models: staticModels,
+      expiresAt: Date.now() + MODEL_CACHE_TTL_MS,
+    });
+    return staticModels;
   }
-  return adapter.models ?? [];
+
+  // Only try dynamic listing if no static models available
+  if (adapter.listModels) {
+    try {
+      const discovered = await Promise.resolve(adapter.listModels(config));
+      if (discovered.length > 0) {
+        modelCache.set(cacheKey, {
+          models: discovered,
+          expiresAt: Date.now() + MODEL_CACHE_TTL_MS,
+        });
+        return discovered;
+      }
+    } catch {
+      // Fall through to return empty
+    }
+  }
+
+  return [];
 }
 
 export function listServerAdapters(): ServerAdapterModule[] {

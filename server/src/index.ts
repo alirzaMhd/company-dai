@@ -98,7 +98,7 @@ if (isAuthenticated()) {
 }
 
 app.use('/api/companies', companiesRouter);
-app.use('/api/companies', adaptersRouter);
+app.use('/api/adapters', adaptersRouter);
 app.use('/api/companies', goalsRouter);
 app.use('/api/agents', agentsRouter);
 app.use('/api/issues', issuesRouter);

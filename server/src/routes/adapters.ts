@@ -11,10 +11,10 @@ const router = Router();
 // IMPORTANT: Specific routes with params must come BEFORE catch-all routes
 // Route order matters in Express - first match wins
 
-// Get adapter models: /companies/:companyId/adapters/:type/models
-router.get('/:companyId/adapters/:type/models', async (req, res) => {
+// Get adapter models: /adapters/:type/models
+router.get('/:type/models', async (req, res) => {
   try {
-    const { companyId, type } = req.params;
+    const { type } = req.params;
     const normalizedType = type.replace(/_/g, '-');
     const models = await listAdapterModels(normalizedType, req.query as Record<string, unknown>);
     res.json(models);
@@ -23,10 +23,10 @@ router.get('/:companyId/adapters/:type/models', async (req, res) => {
   }
 });
 
-// Test adapter environment: /companies/:companyId/adapters/:type/test-environment
-router.post('/:companyId/adapters/:type/test-environment', async (req, res) => {
+// Test adapter environment: /adapters/:type/test-environment
+router.post('/:type/test-environment', async (req, res) => {
   try {
-    const { companyId, type } = req.params;
+    const { type } = req.params;
     const normalizedType = type.replace(/_/g, '-');
     const adapter = getServerAdapter(normalizedType);
     if (!adapter) {
@@ -34,7 +34,7 @@ router.post('/:companyId/adapters/:type/test-environment', async (req, res) => {
       return;
     }
     const result = await adapter.testEnvironment({
-      companyId,
+      companyId: 'default',
       adapterType: normalizedType,
       config: req.body,
     });
