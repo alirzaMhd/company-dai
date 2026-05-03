@@ -21,6 +21,7 @@ interface CompanyContextValue {
   selectedCompany: Company | null;
   selectionSource: CompanySelectionSource;
   loading: boolean;
+  fetching: boolean;
   error: Error | null;
   setSelectedCompanyId: (companyId: string, options?: CompanySelectionOptions) => void;
   reloadCompanies: () => Promise<void>;
@@ -40,7 +41,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const [selectionSource, setSelectionSource] = useState<CompanySelectionSource>("bootstrap");
   const [selectedCompanyId, setSelectedCompanyIdState] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
 
-  const { data: companies = [], isLoading, error } = useQuery({
+  const { data: companies = [], isLoading, isFetching, error } = useQuery({
     queryKey: queryKeys.companies.all,
     queryFn: async () => {
       try {
@@ -135,6 +136,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       selectedCompany,
       selectionSource,
       loading: isLoading,
+      fetching: isFetching,
       error: error as Error | null,
       setSelectedCompanyId,
       reloadCompanies,
@@ -146,6 +148,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       selectedCompany,
       selectionSource,
       isLoading,
+      isFetching,
       error,
       setSelectedCompanyId,
       reloadCompanies,
