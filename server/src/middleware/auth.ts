@@ -3,6 +3,9 @@ import { config, isLocalTrusted } from "../config.js";
 import { auth } from "../auth/better-auth.js";
 import { verifyAgentJwt } from "../auth/agent-auth-jwt.js";
 import { verifyBoardApiKey, verifyAgentApiKey } from "../services/board-auth.js";
+import { db } from "../lib/db.js";
+import { companyMemberships } from "@company-dai/db/schema";
+import { eq, or } from "drizzle-orm";
 
 export type ActorType = "board" | "agent" | "none";
 
@@ -53,11 +56,24 @@ export async function authMiddleware(
       });
 
       if (session?.user) {
+        const memberships = await db
+          .select()
+          .from(companyMemberships)
+          .where(or(
+            eq(companyMemberships.principalId, session.user.id),
+            eq(companyMemberships.principalId, session.user.email)
+          ))
+          .limit(1);
+
+        const userCompanyId = memberships[0]?.companyId;
+        const isInstanceAdmin = memberships.length === 0 || memberships[0]?.membershipRole === "admin" || memberships[0]?.membershipRole === "owner";
+
         req.actor = {
           type: "board",
           userId: session.user.id,
           name: session.user.name,
-          isInstanceAdmin: false,
+          companyId: userCompanyId,
+          isInstanceAdmin: isInstanceAdmin,
         };
         return next();
       }
@@ -73,7 +89,8 @@ export async function authMiddleware(
         type: "board",
         userId: boardKeyResult.userId,
         name: boardKeyResult.name,
-        isInstanceAdmin: false,
+        companyId: boardKeyResult.companyId,
+        isInstanceAdmin: boardKeyResult.isInstanceAdmin,
       };
       return next();
     }

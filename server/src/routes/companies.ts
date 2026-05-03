@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { randomUUID } from "crypto";
 import { db } from "../lib/db.js";
-import { companies } from "@company-dai/db/schema";
+import { companies, companyMemberships } from "@company-dai/db/schema";
 import { eq } from "drizzle-orm";
 
 const router = Router();
@@ -49,6 +49,16 @@ router.post("/", async (req, res) => {
         feedbackDataSharingEnabled: false,
       })
       .returning();
+
+    if (req.actor?.userId) {
+      await db.insert(companyMemberships).values({
+        companyId: id,
+        principalType: "user",
+        principalId: req.actor.userId,
+        status: "active",
+        membershipRole: "owner",
+      });
+    }
 
     res.status(201).json(newCompany);
   } catch (error) {
