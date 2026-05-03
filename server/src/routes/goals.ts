@@ -1,46 +1,32 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { randomUUID } from 'crypto';
+import { db } from '../lib/db.js';
+import { goals } from '@company-dai/db/schema';
+import { eq } from 'drizzle-orm';
 
 const router = Router();
 
-const goals: Map<string, {
-  id: string;
-  title: string;
-  description: string | null;
-  level: string;
-  status: string;
-  companyId: string;
-  parentId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}> = new Map();
-
-const CreateGoalSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().optional(),
-  parentId: z.string().uuid().optional(),
-  level: z.enum(['company', 'team', 'agent', 'task']).default('team'),
-  status: z.enum(['planned', 'active', 'completed', 'blocked']).default('planned'),
-  targetDate: z.string().datetime().optional()
-});
-
-// List goals for a company: /companies/:companyId/goals
 router.get('/:companyId/goals', async (req, res) => {
   try {
     const { companyId } = req.params;
-    const companyGoals = Array.from(goals.values()).filter(g => g.companyId === companyId);
-    res.json({ goals: companyGoals, companyId });
+    const result = await db
+      .select()
+      .from(goals)
+      .where(eq(goals.companyId, companyId));
+    res.json({ goals: result, companyId });
   } catch (error) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// Get goal by ID: /goals/:id
 router.get('/goals/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const goal = goals.get(id);
+    const [goal] = await db
+      .select()
+      .from(goals)
+      .where(eq(goals.id, id))
+      .limit(1);
     if (!goal) {
       return res.status(404).json({ error: 'Goal not found' });
     }
@@ -50,52 +36,61 @@ router.get('/goals/:id', async (req, res) => {
   }
 });
 
-// Create goal for company: /companies/:companyId/goals
 router.post('/:companyId/goals', async (req, res) => {
   try {
     const { companyId } = req.params;
-    const data = CreateGoalSchema.parse(req.body);
+    const { title, description, level, status, parentId } = req.body;
     const id = randomUUID();
-    const now = new Date().toISOString();
-    const goal = {
-      id,
-      title: data.title,
-      description: data.description || null,
-      level: data.level,
-      status: data.status || 'planned',
-      companyId,
-      parentId: data.parentId || null,
-      createdAt: now,
-      updatedAt: now
-    };
-    goals.set(id, goal);
-    console.log("[DEBUG] Created goal:", JSON.stringify(goal));
-    res.status(201).json(goal);
+    const now = new Date();
+
+    const [newGoal] = await db
+      .insert(goals)
+      .values({
+        id,
+        companyId,
+        title,
+        description: description || null,
+        level: level || 'team',
+        status: status || 'planned',
+        parentId: parentId || null,
+      })
+      .returning();
+
+    res.status(201).json(newGoal);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.errors });
-    }
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// Update goal: /goals/:id
 router.patch('/goals/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    res.json({ success: true, id });
+    const { title, description, status, level } = req.body;
+
+    const [updated] = await db
+      .update(goals)
+      .set({
+        ...(title && { title }),
+        ...(description !== undefined && { description }),
+        ...(status && { status }),
+        ...(level && { level }),
+      })
+      .where(eq(goals.id, id))
+      .returning();
+
+    res.json(updated);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// Delete goal: /goals/:id
 router.delete('/goals/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    await db.delete(goals).where(eq(goals.id, id));
     res.json({ success: true, id });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 

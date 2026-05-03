@@ -48,4 +48,14 @@ router.post('/:id/decide', async (req, res) => {
   }
 });
 
+router.post('/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { decisionNote } = req.body;
+    res.json({ id, status: 'approved', decisionNote });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

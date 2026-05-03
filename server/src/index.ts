@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 const distPath = path.join(__dirname, '..', '..', 'ui', 'dist');
 
 import companiesRouter from './routes/companies.js';
-import agentsRouter from './routes/agents.js';
+import { createAgentsRouter } from './routes/agents.js';
 import issuesRouter from './routes/issues.js';
 import projectsRouter from './routes/projects.js';
 import goalsRouter from './routes/goals.js';
@@ -100,9 +100,9 @@ if (isAuthenticated()) {
 app.use('/api/companies', companiesRouter);
 app.use('/api/adapters', adaptersRouter);
 app.use('/api/companies', goalsRouter);
-app.use('/api/agents', agentsRouter);
-app.use('/api/issues', issuesRouter);
-app.use('/api/projects', projectsRouter);
+app.use('/api/companies', createAgentsRouter());
+app.use('/api/companies', issuesRouter);
+app.use('/api/companies', projectsRouter);
 app.use('/api/heartbeat', heartbeatRouter);
 app.use('/api/costs', costsRouter);
 app.use('/api/approvals', approvalsRouter);

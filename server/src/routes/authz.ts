@@ -1,9 +1,13 @@
-import { Router } from "express";
+import { Response, NextFunction } from "express";
 
-const router = Router();
+export function assertCompanyAccess(req: { params: { companyId?: string }; actor?: { companyId?: string } }, companyId: string): void {
+  if (!req.actor?.companyId || req.actor.companyId !== companyId) {
+    throw new Error("Access denied");
+  }
+}
 
-router.get("/", async (req, res) => {
-  res.json({ status: "ok" });
-});
-
-export default router;
+export function assertBoard(req: { actor?: { type?: string } }): void {
+  if (req.actor?.type !== "board") {
+    throw new Error("Board access required");
+  }
+}

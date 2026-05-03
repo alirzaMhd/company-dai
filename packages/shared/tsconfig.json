@@ -14,7 +14,8 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
+    "noEmit": false,
+    "composite": true,
     "types": ["node", "vitest"]
   },
   "include": ["src"]
