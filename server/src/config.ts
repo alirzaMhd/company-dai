@@ -38,32 +38,7 @@ function getDatabaseUrl(): string {
     return process.env.DATABASE_URL;
   }
 
-  if (isLocalDevelopment()) {
-    const envPath = resolve(process.cwd(), ".env");
-    const customPaperclipEnv = "/content/custom-paperclip/.env";
-
-    if (existsSync(envPath)) {
-      try {
-        const envContent = require("fs").readFileSync(envPath, "utf-8");
-        const dbMatch = envContent.match(/DATABASE_URL=(.+)/);
-        if (dbMatch) {
-          return dbMatch[1].trim();
-        }
-      } catch {}
-    }
-
-    if (existsSync(customPaperclipEnv)) {
-      try {
-        const envContent = require("fs").readFileSync(customPaperclipEnv, "utf-8");
-        const dbMatch = envContent.match(/DATABASE_URL=(.+)/);
-        if (dbMatch) {
-          return dbMatch[1].trim();
-        }
-      } catch {}
-    }
-  }
-
-  return "postgres://localhost:5432/company_dai";
+  return "postgresql://postgres.lwxnrdxeozeetihwoclg:Abcd_12345678987654321_Abcd@aws-1-us-east-1.pooler.supabase.com:5432/postgres";
 }
 
 export const config: Config = {
