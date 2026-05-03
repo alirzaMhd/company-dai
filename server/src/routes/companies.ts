@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
+import { listAdapterModels } from '../adapters/registry.js';
 
 const router = Router();
 
@@ -225,7 +226,21 @@ router.post('/:id/memberships', async (req, res) => {
     const { id } = req.params;
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: (error as Error).message });
+  }
+});
+
+router.get('/:companyId/adapters/:type/models', async (req, res) => {
+  try {
+    const { companyId, type } = req.params;
+    const normalizedType = type.replace(/_/g, '-');
+    const adapterConfig = (req.query.adapterConfig as string)
+      ? JSON.parse(req.query.adapterConfig as string)
+      : undefined;
+    const models = await listAdapterModels(normalizedType, adapterConfig);
+    res.json(models);
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 
