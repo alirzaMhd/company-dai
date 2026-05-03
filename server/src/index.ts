@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import compression from 'compression';
 import { authMiddleware } from './middleware/auth.js';
+import { config } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,7 +70,11 @@ app.use(authMiddleware);
 
 app.get('/health', (req, res) => {
   res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    deploymentMode: config.deploymentMode,
+  });
 });
 
 app.use('/api/companies', companiesRouter);

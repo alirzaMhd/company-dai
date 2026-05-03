@@ -31,7 +31,7 @@ router.get("/get-session", async (req, res) => {
     });
 
     if (!session?.user) {
-      return res.json({ user: null, session: null });
+      return res.status(401).json({ user: null, session: null });
     }
 
     return res.json({
@@ -40,7 +40,7 @@ router.get("/get-session", async (req, res) => {
     });
   } catch (error) {
     console.error("Get session error:", error);
-    return res.json({ user: null, session: null });
+    return res.status(401).json({ user: null, session: null });
   }
 });
 
