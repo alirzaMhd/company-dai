@@ -2,3 +2,6 @@ packages:
   - 'packages/*'
   - 'server'
   - 'ui'
+allowBuilds:
+  es5-ext: false
+  esbuild: false
