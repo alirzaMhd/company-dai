@@ -63,8 +63,20 @@ import workspaceRuntimeServiceAuthzRouter from './routes/workspace-runtime-servi
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    /\.vercel\.app$/,
+    /\.vercel\.app:.+$/,
+    /\.render\.com$/,
+    /\.on\.render\.com$/,
+  ],
+  credentials: true,
+};
+
 app.use(compression());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(authMiddleware);
 
