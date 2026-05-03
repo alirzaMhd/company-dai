@@ -28,7 +28,12 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: false,
   },
-  trustedOrigins: [baseUrl, `http://localhost:${config.port}`, `https://localhost:${config.port}`],
+  trustedOrigins: [
+    baseUrl,
+    `http://localhost:${config.port}`,
+    `https://localhost:${config.port}`,
+    "https://*.trycloudflare.com",
+  ],
   session: {
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
