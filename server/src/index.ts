@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import compression from 'compression';
+import { authMiddleware } from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,8 +62,10 @@ import workspaceRuntimeServiceAuthzRouter from './routes/workspace-runtime-servi
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.use(compression());
 app.use(cors());
 app.use(express.json());
+app.use(authMiddleware);
 
 app.get('/health', (req, res) => {
   res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
@@ -119,8 +123,11 @@ app.use('/api/plugin-ui-static', pluginUiStaticRouter);
 app.use('/api/workspace-command-authz', workspaceCommandAuthzRouter);
 app.use('/api/workspace-runtime-service-authz', workspaceRuntimeServiceAuthzRouter);
 
-// Serve static files from dist
-app.use(express.static(distPath));
+// Serve static files from dist with cache headers
+app.use(express.static(distPath, {
+  maxAge: '1y',
+  immutable: true
+}));
 
 // SPA fallback - serve index.html for all non-API routes
 app.get('*', (req, res) => {

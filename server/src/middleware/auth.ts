@@ -1,0 +1,136 @@
+import { Request, Response, NextFunction } from "express";
+import { config, isLocalTrusted } from "../config.js";
+import { auth } from "../auth/better-auth.js";
+import { verifyAgentJwt } from "../auth/agent-auth-jwt.js";
+import { verifyBoardApiKey, verifyAgentApiKey } from "../services/board-auth.js";
+
+export type ActorType = "board" | "agent" | "none";
+
+export interface Actor {
+  type: ActorType;
+  userId?: string;
+  agentId?: string;
+  companyId?: string;
+  isInstanceAdmin?: boolean;
+  name?: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      actor?: Actor;
+    }
+  }
+}
+
+function parseAuthHeader(authHeader: string | undefined): string | null {
+  if (!authHeader) return null;
+  if (!authHeader.startsWith("Bearer ")) return null;
+  return authHeader.substring(7);
+}
+
+export async function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  if (isLocalTrusted()) {
+    req.actor = {
+      type: "board",
+      userId: "local-board",
+      isInstanceAdmin: true,
+    };
+    return next();
+  }
+
+  const cookie = req.headers.cookie;
+  const authHeader = parseAuthHeader(req.headers.authorization);
+
+  if (cookie) {
+    try {
+      const session = await auth.api.getSession({
+        headers: { cookie },
+      });
+
+      if (session?.user) {
+        req.actor = {
+          type: "board",
+          userId: session.user.id,
+          name: session.user.name,
+          isInstanceAdmin: false,
+        };
+        return next();
+      }
+    } catch (error) {
+      console.error("Session verification failed:", error);
+    }
+  }
+
+  if (authHeader) {
+    const boardKeyResult = await verifyBoardApiKey(authHeader);
+    if (boardKeyResult.valid) {
+      req.actor = {
+        type: "board",
+        userId: boardKeyResult.userId,
+        name: boardKeyResult.name,
+        isInstanceAdmin: false,
+      };
+      return next();
+    }
+
+    const agentKeyResult = await verifyAgentApiKey(authHeader);
+    if (agentKeyResult.valid) {
+      req.actor = {
+        type: "agent",
+        agentId: agentKeyResult.agentId,
+        companyId: agentKeyResult.companyId,
+        name: agentKeyResult.name,
+      };
+      return next();
+    }
+
+    const jwtResult = verifyAgentJwt(authHeader);
+    if (jwtResult.valid && jwtResult.payload) {
+      req.actor = {
+        type: "agent",
+        agentId: jwtResult.payload.agentId,
+        companyId: jwtResult.payload.companyId,
+      };
+      return next();
+    }
+  }
+
+  req.actor = {
+    type: "none",
+  };
+
+  return next();
+}
+
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (!req.actor || req.actor.type === "none") {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  return next();
+}
+
+export function requireBoard(req: Request, res: Response, next: NextFunction) {
+  if (!req.actor || req.actor.type !== "board") {
+    return res.status(403).json({ error: "Board access required" });
+  }
+  return next();
+}
+
+export function requireAgent(req: Request, res: Response, next: NextFunction) {
+  if (!req.actor || req.actor.type !== "agent") {
+    return res.status(403).json({ error: "Agent access required" });
+  }
+  return next();
+}
+
+export function requireInstanceAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.actor || !req.actor.isInstanceAdmin) {
+    return res.status(403).json({ error: "Instance admin access required" });
+  }
+  return next();
+}

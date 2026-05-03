@@ -9,5 +9,9 @@
     "outDir": "./dist",
     "rootDir": "./src"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [
+    { "path": "../packages/db" },
+    { "path": "../packages/shared" }
+  ]
 }
