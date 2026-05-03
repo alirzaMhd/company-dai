@@ -169,7 +169,7 @@ export const agentsApi = {
         ? `?adapterConfig=${encodeURIComponent(JSON.stringify(adapterConfig))}`
         : "";
       return api.get<AdapterModel[]>(
-        `/adapters/${type}/models${params}`,
+        `/companies/${encodeURIComponent(companyId)}/adapters/${encodeURIComponent(type)}/models${params}`,
       );
     },
   detectModel: (companyId: string, type: string) =>
