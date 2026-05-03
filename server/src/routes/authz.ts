@@ -1,5 +1,6 @@
 import { Router, Response, NextFunction } from "express";
 import { requireAuth } from "../middleware/auth.js";
+import { isLocalTrusted } from "../config.js";
 import type { Request } from "express";
 
 const router = Router();
@@ -20,7 +21,10 @@ export function assertAuthenticated(req: Request): void {
   }
 }
 
-export function assertCompanyAccess(req: { params: { companyId?: string }; actor?: { companyId?: string } }, companyId: string): void {
+export function assertCompanyAccess(req: { params: { companyId?: string }; actor?: { companyId?: string, isInstanceAdmin?: boolean } }, companyId: string): void {
+  if (isLocalTrusted()) {
+    return;
+  }
   if (!req.actor?.companyId || req.actor.companyId !== companyId) {
     throw new Error("Access denied");
   }
