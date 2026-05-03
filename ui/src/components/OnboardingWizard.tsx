@@ -114,6 +114,15 @@ export function OnboardingWizard() {
   const [args, setArgs] = useState("");
   const [url, setUrl] = useState("");
   const [tunnelUrl, setTunnelUrl] = useState("");
+  const [remoteModel, setRemoteModel] = useState("");
+  const [remoteModels, setRemoteModels] = useState<{ id: string; label: string }[]>([]);
+  const [remoteModelsLoading, setRemoteModelsLoading] = useState(false);
+  const [remoteModelsError, setRemoteModelsError] = useState<string | null>(null);
+  const [remoteModelOpen, setRemoteModelOpen] = useState(false);
+  const [remoteModelSearch, setRemoteModelSearch] = useState("");
+  const [remoteEnvResult, setRemoteEnvResult] = useState<{ status: string; message?: string } | null>(null);
+  const [remoteEnvError, setRemoteEnvError] = useState<string | null>(null);
+  const [remoteEnvLoading, setRemoteEnvLoading] = useState(false);
   const [adapterEnvResult, setAdapterEnvResult] =
     useState<AdapterEnvironmentTestResult | null>(null);
   const [adapterEnvError, setAdapterEnvError] = useState<string | null>(null);
@@ -296,6 +305,12 @@ export function OnboardingWizard() {
     setCommand("");
     setArgs("");
     setUrl("");
+    setTunnelUrl("");
+    setRemoteModel("");
+    setRemoteModels([]);
+    setRemoteModelsError(null);
+    setRemoteEnvResult(null);
+    setRemoteEnvError(null);
     setAdapterEnvResult(null);
     setAdapterEnvError(null);
     setAdapterEnvLoading(false);
@@ -328,6 +343,8 @@ export function OnboardingWizard() {
             ? model || DEFAULT_GEMINI_LOCAL_MODEL
           : adapterType === "cursor"
           ? model || DEFAULT_CURSOR_LOCAL_MODEL
+          : adapterType === "opencode_remote"
+            ? remoteModel || ""
           : model,
       command,
       args,
@@ -381,6 +398,108 @@ export function OnboardingWizard() {
       return null;
     } finally {
       setAdapterEnvLoading(false);
+    }
+  }
+
+  async function fetchRemoteModels(url: string): Promise<{ id: string; label: string }[]> {
+    return new Promise((resolve, reject) => {
+      let ws: WebSocket;
+      try {
+        ws = new WebSocket(url);
+      } catch {
+        reject(new Error("Invalid WebSocket URL"));
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        ws.close();
+        reject(new Error("Connection timeout"));
+      }, 10000);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ type: "models" }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "models") {
+            clearTimeout(timeout);
+            ws.close();
+            resolve(msg.models || []);
+          }
+        } catch {
+          clearTimeout(timeout);
+          ws.close();
+          reject(new Error("Failed to parse models response"));
+        }
+      };
+
+      ws.onerror = () => {
+        clearTimeout(timeout);
+        ws.close();
+        reject(new Error("WebSocket connection error"));
+      };
+    });
+  }
+
+  useEffect(() => {
+    if (adapterType !== "opencode_remote" || !tunnelUrl.trim()) {
+      setRemoteModels([]);
+      setRemoteModelsError(null);
+      return;
+    }
+
+    let cancelled = false;
+    setRemoteModelsLoading(true);
+    setRemoteModelsError(null);
+
+    fetchRemoteModels(tunnelUrl.trim())
+      .then((models) => {
+        if (!cancelled) {
+          setRemoteModels(models);
+          if (models.length > 0 && !remoteModel) {
+            setRemoteModel(models[0].id);
+          }
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setRemoteModelsError(err.message);
+          setRemoteModels([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setRemoteModelsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [adapterType, tunnelUrl]);
+
+  async function runRemoteEnvTest() {
+    if (!tunnelUrl.trim()) {
+      setRemoteEnvError("WebSocket URL is required");
+      return;
+    }
+
+    setRemoteEnvLoading(true);
+    setRemoteEnvResult(null);
+    setRemoteEnvError(null);
+
+    try {
+      const result = await fetchRemoteModels(tunnelUrl.trim());
+      setRemoteEnvResult({
+        status: "pass",
+        message: `Connected successfully. Found ${result.length} model(s).`
+      });
+    } catch (err) {
+      setRemoteEnvError(err instanceof Error ? err.message : "Connection failed");
+    } finally {
+      setRemoteEnvLoading(false);
     }
   }
 
@@ -1102,21 +1221,135 @@ export function OnboardingWizard() {
                   )}
 
                   {adapterType === "opencode_remote" && (
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        WebSocket Tunnel URL
-                      </label>
-                      <input
-                        className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
-                        placeholder="wss://xxx.trycloudflare.com"
-                        value={tunnelUrl}
-                        onChange={(e) => setTunnelUrl(e.target.value)}
-                      />
-                      <p className="text-[11px] text-muted-foreground mt-1">
-                        Run{" "}
-                        <span className="font-mono">colab-opencode-api</span> in
-                        Colab to get your tunnel URL
-                      </p>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">
+                          WebSocket Tunnel URL
+                        </label>
+                        <input
+                          className="w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/50"
+                          placeholder="wss://xxx.trycloudflare.com"
+                          value={tunnelUrl}
+                          onChange={(e) => setTunnelUrl(e.target.value)}
+                        />
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Run{" "}
+                          <span className="font-mono">colab-opencode-api</span> in
+                          Colab to get your tunnel URL
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">
+                          Model
+                        </label>
+                        <Popover
+                          open={remoteModelOpen}
+                          onOpenChange={(next) => {
+                            setRemoteModelOpen(next);
+                            if (!next) setRemoteModelSearch("");
+                          }}
+                        >
+                          <PopoverTrigger asChild>
+                            <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-sm hover:bg-accent/50 transition-colors w-full justify-between">
+                              <span
+                                className={cn(
+                                  !remoteModel && "text-muted-foreground"
+                                )}
+                              >
+                                {remoteModel || "Select model (required)"}
+                              </span>
+                              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-[var(--radix-popover-trigger-width)] p-1"
+                            align="start"
+                          >
+                            <input
+                              className="w-full px-2 py-1.5 text-xs bg-transparent outline-none border-b border-border mb-1 placeholder:text-muted-foreground/50"
+                              placeholder="Search models..."
+                              value={remoteModelSearch}
+                              onChange={(e) => setRemoteModelSearch(e.target.value)}
+                              autoFocus
+                            />
+                            <div className="max-h-[240px] overflow-y-auto">
+                              {remoteModelsLoading ? (
+                                <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                                  Loading models...
+                                </p>
+                              ) : remoteModelsError ? (
+                                <p className="px-2 py-1.5 text-xs text-destructive">
+                                  {remoteModelsError}
+                                </p>
+                              ) : remoteModels.length === 0 ? (
+                                <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                                  No models discovered. Enter a valid tunnel URL.
+                                </p>
+                              ) : (
+                                remoteModels
+                                  .filter((m) =>
+                                    remoteModelSearch
+                                      ? m.id.toLowerCase().includes(remoteModelSearch.toLowerCase()) ||
+                                        m.label.toLowerCase().includes(remoteModelSearch.toLowerCase())
+                                      : true
+                                  )
+                                  .map((m) => (
+                                    <button
+                                      key={m.id}
+                                      className={cn(
+                                        "flex items-center w-full px-2 py-1.5 text-sm rounded hover:bg-accent/50",
+                                        m.id === remoteModel && "bg-accent"
+                                      )}
+                                      onClick={() => {
+                                        setRemoteModel(m.id);
+                                        setRemoteModelOpen(false);
+                                      }}
+                                    >
+                                      <span
+                                        className="block w-full text-left truncate"
+                                        title={m.id}
+                                      >
+                                        {m.label}
+                                      </span>
+                                    </button>
+                                  ))
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 rounded-md border border-border p-3">
+                        <div>
+                          <p className="text-xs font-medium">Connection test</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Test WebSocket connection and fetch models.
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2.5 text-xs"
+                          disabled={remoteEnvLoading || !tunnelUrl.trim()}
+                          onClick={() => void runRemoteEnvTest()}
+                        >
+                          {remoteEnvLoading ? "Testing..." : "Test connection"}
+                        </Button>
+                      </div>
+
+                      {remoteEnvError && (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-2.5 py-2 text-[11px] text-destructive">
+                          {remoteEnvError}
+                        </div>
+                      )}
+
+                      {remoteEnvResult && remoteEnvResult.status === "pass" && (
+                        <div className="flex items-center gap-2 rounded-md border border-green-300 dark:border-green-500/40 bg-green-50 dark:bg-green-500/10 px-3 py-2 text-xs text-green-700 dark:text-green-300 animate-in fade-in slide-in-from-bottom-1 duration-300">
+                          <Check className="h-3.5 w-3.5 shrink-0" />
+                          <span className="font-medium">{remoteEnvResult.message}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
