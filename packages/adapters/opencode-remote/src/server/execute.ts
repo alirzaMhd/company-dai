@@ -6,14 +6,22 @@ import type {
   AdapterSessionCodec,
   AdapterEnvironmentCheck,
   AdapterEnvironmentCheckLevel,
-} from "../../adapter-utils/dist/index.js";
+} from "@paperclipai/adapter-utils";
 import {
   asString,
   asNumber,
   asStringArray,
   parseObject,
+  buildPaperclipEnv,
+  joinPromptSections,
+  buildInvocationEnvForLogs,
+  renderTemplate,
+  renderPaperclipWakePrompt,
+  stringifyPaperclipWakePayload,
   DEFAULT_PAPERCLIP_AGENT_PROMPT_TEMPLATE,
-} from "../../adapter-utils/dist/server-utils.js";
+  readPaperclipRuntimeSkillEntries,
+  resolvePaperclipDesiredSkillNames,
+} from "@paperclipai/adapter-utils/server-utils";
 import WebSocket from "ws";
 
 interface OpenCodeRemoteConfig {
@@ -26,9 +34,15 @@ interface OpenCodeRemoteConfig {
 const MODELS_CACHE: Map<string, { id: string; label: string }[]> = new Map();
 export { MODELS_CACHE };
 
+interface PendingRequest {
+  resolve: (value: unknown) => void;
+  reject: (error: Error) => void;
+}
+
 class OpenCodeRemoteClient {
   private ws: WebSocket | null = null;
   private url: string;
+  private pending = new Map<string, PendingRequest>();
   private sessionId: string | null = null;
   private onLog: ((type: string, data: string) => void) | null = null;
 
@@ -276,6 +290,7 @@ export async function testEnvironment(
         message: "Successfully connected to remote OpenCode server",
       });
 
+      // Fetch models after successful connection
       try {
         const models = await fetchAndCacheModels(tunnelUrl);
         if (models.length > 0) {
@@ -311,7 +326,7 @@ export async function testEnvironment(
 export async function execute(
   ctx: AdapterExecutionContext,
 ): Promise<AdapterExecutionResult> {
-  const { runId, agent, runtime, config, context, onLog, onMeta } = ctx;
+  const { runId, agent, runtime, config, context, onLog, onMeta, authToken } = ctx;
 
   const adapterConfig = parseObject(config) as OpenCodeRemoteConfig;
   const tunnelUrl = adapterConfig.tunnelUrl;
@@ -324,6 +339,7 @@ export async function execute(
   const workspaceId = asString(workspaceContext.workspaceId, "");
   const workspaceRepoUrl = asString(workspaceContext.repoUrl, "");
   const workspaceRepoRef = asString(workspaceContext.repoRef, "");
+  const agentHome = asString(workspaceContext.agentHome, "");
   const cwd = workspaceCwd || process.cwd();
 
   const runtimeSessionParams = parseObject(runtime.sessionParams);
@@ -333,6 +349,18 @@ export async function execute(
     runtimeSessionId.length > 0 &&
     (runtimeSessionCwd.length === 0 || runtimeSessionCwd === cwd);
   const sessionId = canResumeSession ? runtimeSessionId : null;
+
+  const instructionsFilePath = asString(config.instructionsFilePath, "").trim();
+  let instructionsPrefix = "";
+  if (instructionsFilePath) {
+    try {
+      const fs = await import("node:fs/promises");
+      const instructionsContents = await fs.readFile(instructionsFilePath, "utf8");
+      instructionsPrefix = `${instructionsContents}\n\n`;
+    } catch {
+      // Ignore errors
+    }
+  }
 
   const promptTemplate = asString(
     config.promptTemplate,
@@ -347,15 +375,17 @@ export async function execute(
     run: { id: runId, source: "on_demand" },
     context,
   };
-  const renderedPrompt = promptTemplate
-    .replace(/\{\{(\w+)\}\}/g, (_, key) => {
-      const value = templateData[key as keyof typeof templateData];
-      return typeof value === "object" ? JSON.stringify(value) : String(value ?? "");
-    })
-    .replace(/\{\{(\w+)\.(\w+)\}\}/g, (_, path, field) => {
-      const obj = templateData[path as keyof typeof templateData];
-      return obj?.[field] ?? "";
-    });
+  const wakePrompt = renderPaperclipWakePrompt(context.paperclipWake, {
+    resumedSession: Boolean(sessionId),
+  });
+  const renderedPrompt = renderTemplate(promptTemplate, templateData);
+  const sessionHandoffNote = asString(context.paperclipSessionHandoffMarkdown, "").trim();
+  const prompt = joinPromptSections([
+    instructionsPrefix,
+    wakePrompt,
+    sessionHandoffNote,
+    renderedPrompt,
+  ]);
 
   if (onMeta) {
     await onMeta({
@@ -364,13 +394,22 @@ export async function execute(
       cwd,
       commandNotes: [`Remote OpenCode at ${tunnelUrl}`],
       commandArgs: [],
-      prompt: renderedPrompt,
+      env: buildInvocationEnvForLogs({}, { resolvedCommand: tunnelUrl }),
+      prompt,
+      promptMetrics: {
+        promptChars: prompt.length,
+        instructionsChars: instructionsPrefix.length,
+        bootstrapPromptChars: 0,
+        wakePromptChars: wakePrompt.length,
+        sessionHandoffChars: sessionHandoffNote.length,
+        heartbeatPromptChars: renderedPrompt.length,
+      },
       context,
     });
   }
 
   const client = new OpenCodeRemoteClient(tunnelUrl || "");
-
+  
   const logFn = async (streamType: string, data: string) => {
     await onLog(streamType as "stdout" | "stderr", data);
   };
@@ -380,7 +419,7 @@ export async function execute(
     await client.connect();
 
     const result = await client.execute(
-      renderedPrompt,
+      prompt,
       model,
       variant,
       cwd,

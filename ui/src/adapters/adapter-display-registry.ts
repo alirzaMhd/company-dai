@@ -23,8 +23,8 @@ import { HermesIcon } from "@/components/HermesIcon";
 // ---------------------------------------------------------------------------
 
 const TYPE_SUFFIXES: Record<string, string> = {
-  "-local": "local",
-  "-gateway": "gateway",
+  _local: "local",
+  _gateway: "gateway",
 };
 
 function getTypeSuffix(type: string): string | null {
@@ -52,49 +52,49 @@ export interface AdapterDisplayInfo {
 }
 
 const adapterDisplayMap: Record<string, AdapterDisplayInfo> = {
-  "claude-local": {
+  claude_local: {
     label: "Claude Code",
     description: "Local Claude agent",
     icon: Sparkles,
     recommended: true,
   },
-  "codex-local": {
+  codex_local: {
     label: "Codex",
     description: "Local Codex agent",
     icon: Code,
     recommended: true,
   },
-  "gemini-local": {
+  gemini_local: {
     label: "Gemini CLI",
     description: "Local Gemini agent",
     icon: Gem,
   },
-  "opencode-local": {
+  opencode_local: {
     label: "OpenCode",
     description: "Local multi-provider agent",
     icon: OpenCodeLogoIcon,
   },
-  "opencode-remote": {
+  opencode_remote: {
     label: "OpenCode Remote",
     description: "Remote multi-provider agent via WebSocket",
     icon: OpenCodeLogoIcon,
   },
-  "hermes-local": {
+  hermes_local: {
     label: "Hermes Agent",
     description: "Local Hermes CLI agent",
     icon: HermesIcon,
   },
-  "pi-local": {
+  pi_local: {
     label: "Pi",
     description: "Local Pi agent",
     icon: Terminal,
   },
-  "cursor-local": {
+  cursor: {
     label: "Cursor",
     description: "Local Cursor agent",
     icon: MousePointer2,
   },
-  "openclaw-gateway": {
+  openclaw_gateway: {
     label: "OpenClaw Gateway",
     description: "Invoke OpenClaw via gateway protocol",
     icon: Bot,

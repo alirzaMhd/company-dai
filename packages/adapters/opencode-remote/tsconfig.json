@@ -1,16 +1,8 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": false,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": false,
-    "noImplicitAny": false,
-    "baseUrl": "../../..",
-    "paths": {
-      "@company-dai/adapter-utils": ["packages/adapter-utils/dist/index.js"],
-      "@company-dai/adapter-utils/*": ["packages/adapter-utils/dist/*.js"]
-    }
+    "outDir": "dist",
+    "rootDir": "src"
   },
   "include": ["src"]
 }

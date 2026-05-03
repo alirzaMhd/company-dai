@@ -1,5 +1,5 @@
-import type { AdapterModel } from "../../adapter-utils/dist/index.js";
-import { asString, parseObject } from "../../adapter-utils/dist/server-utils.js";
+import type { AdapterModel } from "@paperclipai/adapter-utils";
+import { asString, parseObject } from "@paperclipai/adapter-utils/server-utils";
 import WebSocket from "ws";
 import { MODELS_CACHE } from "./execute.js";
 
@@ -8,7 +8,7 @@ interface OpenCodeRemoteConfig {
   model?: string;
 }
 
-const MODELS_CACHE_TTL_MS = 5 * 60 * 1000;
+const MODELS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 async function fetchModelsFromServer(tunnelUrl: string): Promise<{ id: string; label: string }[]> {
   const cached = MODELS_CACHE.get(tunnelUrl);
@@ -82,14 +82,17 @@ export async function ensureOpenCodeRemoteModelConfigured(
     return [];
   }
 
+  // Validate by fetching models
   try {
     const models = await fetchModelsFromServer(tunnelUrl);
     const found = models.find((m) => m.id === model);
     if (found) {
       return [found];
     }
+    // Return even if not in list (could be valid on server but not cached)
     return [{ id: model, label: model }];
   } catch {
+    // On error, just return the user-specified model
     return [{ id: model, label: model }];
   }
 }

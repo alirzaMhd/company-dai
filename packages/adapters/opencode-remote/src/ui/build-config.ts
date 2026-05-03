@@ -1,4 +1,4 @@
-import type { CreateConfigValues } from "@company-dai/adapter-utils";
+import type { CreateConfigValues } from "@paperclipai/adapter-utils";
 
 export function buildOpenCodeRemoteConfig(v: CreateConfigValues): Record<string, unknown> {
   const ac: Record<string, unknown> = {};

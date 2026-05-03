@@ -1,0 +1,1 @@
+export { type AdapterModel } from "@paperclipai/adapter-utils";

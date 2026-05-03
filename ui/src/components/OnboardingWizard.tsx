@@ -327,7 +327,7 @@ export function OnboardingWizard() {
           : adapterType === "gemini_local"
             ? model || DEFAULT_GEMINI_LOCAL_MODEL
           : adapterType === "cursor"
-            ? model || DEFAULT_CURSOR_LOCAL_MODEL
+          ? model || DEFAULT_CURSOR_LOCAL_MODEL
           : model,
       command,
       args,
@@ -845,15 +845,15 @@ export function OnboardingWizard() {
                               }
                               setModel("");
                             }}
-                           >
-                             <opt.icon className="h-4 w-4" />
-                             <span className="font-medium">{opt.label}</span>
-                             <span className="text-muted-foreground text-[10px]">
-                               {opt.comingSoon
-                                 ? opt.disabledLabel ?? "Coming soon"
-                                 : opt.description}
-                             </span>
-                           </button>
+                          >
+                            <opt.icon className="h-4 w-4" />
+                            <span className="font-medium">{opt.label}</span>
+                            <span className="text-muted-foreground text-[10px]">
+                              {opt.comingSoon
+                                ? opt.disabledLabel ?? "Coming soon"
+                                : opt.description}
+                            </span>
+                          </button>
                         ))}
                       </div>
                     )}

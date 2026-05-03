@@ -1,6 +1,6 @@
 {
-  "name": "@company-dai/adapters/opencode-remote",
-  "version": "1.0.0",
+  "name": "@paperclipai/opencode-remote",
+  "version": "0.0.1",
   "license": "MIT",
   "type": "module",
   "main": "./src/server/index.ts",
@@ -19,14 +19,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@company-dai/adapter-utils": "workspace:*",
+    "@paperclipai/adapter-utils": "workspace:*",
     "ws": "^8.16.0"
   },
   "devDependencies": {
     "@types/ws": "^8.5.10",
-    "typescript": "^5.7.3"
+    "typescript": "^5.0.0"
   },
   "peerDependencies": {
-    "typescript": "^5.7.3"
+    "typescript": "^5.0.0"
   }
 }
