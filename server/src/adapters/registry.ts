@@ -1,6 +1,13 @@
 import { spawn, exec } from 'child_process';
 import { promisify } from 'util';
 import type { ServerAdapterModule, AdapterModel, AdapterEnvironmentTestResult, AdapterEnvironmentCheck } from '@company-dai/adapters';
+import {
+  execute as openCodeRemoteExecute,
+  testEnvironment as openCodeRemoteTestEnvironment,
+  sessionCodec as openCodeRemoteSessionCodec,
+  listOpenCodeRemoteModels,
+  listOpenCodeRemoteSkills,
+} from '@company-dai/adapters/opencode-remote';
 
 const execAsync = promisify(exec);
 
@@ -666,6 +673,26 @@ const httpAdapter: ServerAdapterModule = {
 };
 
 // ---------------------------------------------------------------------------
+// OpenCode Remote Adapter
+// ---------------------------------------------------------------------------
+
+const openCodeRemoteAdapter: ServerAdapterModule = {
+  type: 'opencode-remote',
+  execute: openCodeRemoteExecute,
+  testEnvironment: openCodeRemoteTestEnvironment,
+  sessionCodec: openCodeRemoteSessionCodec,
+  models: [],
+  listModels: async (config) => {
+    if (!config?.tunnelUrl) return [];
+    return listOpenCodeRemoteModels(config.tunnelUrl);
+  },
+  skills: listOpenCodeRemoteSkills,
+  supportsLocalAgentJwt: false,
+  supportsInstructionsBundle: false,
+  requiresMaterializedRuntimeSkills: true,
+};
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
@@ -680,6 +707,7 @@ function registerBuiltInAdapters() {
     cursorLocalAdapter,
     processAdapter,
     httpAdapter,
+    openCodeRemoteAdapter,
   ]) {
     adaptersByType.set(adapter.type, adapter);
   }

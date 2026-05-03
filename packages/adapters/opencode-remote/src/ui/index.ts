@@ -1,11 +1,5 @@
-import type { ConfigFieldSchema, StdoutLineParser, TranscriptEntry } from "@company-dai/adapter-utils";
-
-const ISO = new RegExp("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}");
-
-function parseTimestamp(line: string): string | null {
-  const match = line.match(ISO);
-  return match ? match[0] : new Date().toISOString();
-}
+export { parseStdoutLine } from "./parse-stdout.js";
+export { buildOpenCodeRemoteConfig } from "./build-config.js";
 
 export const parseStdoutLine: StdoutLineParser = (line: string, ts: string) => {
   const entryTs = parseTimestamp(line) || ts;

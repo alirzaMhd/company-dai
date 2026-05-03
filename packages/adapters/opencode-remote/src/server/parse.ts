@@ -1,10 +1,8 @@
-import json;
-
 export function parseOpenCodeRemoteJsonl(stdout: string): Record<string, unknown> | null {
   for (const line of stdout.trim().split("\n")) {
     if (!line) continue;
     try {
-      const data = json.loads(line);
+      const data = JSON.parse(line);
       if (data.type === "result") {
         return data;
       }
