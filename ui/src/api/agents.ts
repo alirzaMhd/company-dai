@@ -182,7 +182,7 @@ export const agentsApi = {
     data: { adapterConfig: Record<string, unknown> },
   ) =>
     api.post<AdapterEnvironmentTestResult>(
-      `/adapters/${type}/test-environment`,
+      `/companies/${companyId}/adapters/${type}/test-environment`,
       data,
     ),
   invoke: (id: string, companyId?: string) => api.post<HeartbeatRun>(agentPath(id, companyId, "/heartbeat/invoke"), {}),
