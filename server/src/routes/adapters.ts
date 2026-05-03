@@ -45,6 +45,14 @@ import { BUILTIN_ADAPTER_TYPES } from "../adapters/builtin-adapter-types.js";
 const execFileAsync = promisify(execFile);
 
 // ---------------------------------------------------------------------------
+// Helper functions
+// ---------------------------------------------------------------------------
+
+function normalizeAdapterType(type: string): string {
+  return type.replace(/_/g, "-");
+}
+
+// ---------------------------------------------------------------------------
 // Request / Response types
 // ---------------------------------------------------------------------------
 
@@ -183,7 +191,7 @@ router.get("/", async (_req, res) => {
  */
 router.get("/:type", async (req, res) => {
   try {
-    const { type } = req.params;
+    const type = normalizeAdapterType(req.params.type);
     const adapter = findServerAdapter(type);
     if (!adapter) {
       res.status(404).json({ error: `Adapter "${type}" is not registered.` });
@@ -206,7 +214,7 @@ router.get("/:type", async (req, res) => {
  */
 router.get("/:type/models", async (req, res) => {
   try {
-    const { type } = req.params;
+    const type = normalizeAdapterType(req.params.type);
     const adapter = findActiveServerAdapter(type);
     if (!adapter) {
       res.status(404).json({ error: `Adapter "${type}" is not registered.` });
@@ -231,7 +239,7 @@ router.get("/:type/models", async (req, res) => {
  */
 router.post("/:type/test-environment", async (req, res) => {
   try {
-    const { type } = req.params;
+    const type = normalizeAdapterType(req.params.type);
     const adapter = findActiveServerAdapter(type);
     if (!adapter) {
       res.status(404).json({ error: `Adapter "${type}" is not registered.` });
@@ -368,7 +376,7 @@ router.post("/install", async (req, res) => {
  */
 router.patch("/:type", async (req, res) => {
   try {
-    const adapterType = req.params.type;
+    const adapterType = normalizeAdapterType(req.params.type);
     const { disabled } = req.body as { disabled?: boolean };
 
     if (typeof disabled !== "boolean") {
@@ -401,7 +409,7 @@ router.patch("/:type", async (req, res) => {
  */
 router.patch("/:type/override", async (req, res) => {
   try {
-    const adapterType = req.params.type;
+    const adapterType = normalizeAdapterType(req.params.type);
     const { paused } = req.body as { paused?: boolean };
 
     if (typeof paused !== "boolean") {
@@ -431,7 +439,7 @@ router.patch("/:type/override", async (req, res) => {
  */
 router.delete("/:type", async (req, res) => {
   try {
-    const adapterType = req.params.type;
+    const adapterType = normalizeAdapterType(req.params.type);
 
     if (!adapterType) {
       res.status(400).json({ error: "Adapter type is required." });
@@ -498,7 +506,7 @@ router.delete("/:type", async (req, res) => {
  */
 router.post("/:type/reload", async (req, res) => {
   try {
-    const type = req.params.type;
+    const type = normalizeAdapterType(req.params.type);
 
     if (BUILTIN_ADAPTER_TYPES.has(type) && !getAdapterPluginByType(type)) {
       res.status(400).json({ error: "Cannot reload built-in adapter." });
@@ -546,7 +554,7 @@ router.post("/:type/reload", async (req, res) => {
  */
 router.post("/:type/reinstall", async (req, res) => {
   try {
-    const type = req.params.type;
+    const type = normalizeAdapterType(req.params.type);
 
     if (BUILTIN_ADAPTER_TYPES.has(type) && !getAdapterPluginByType(type)) {
       res.status(400).json({ error: "Cannot reinstall built-in adapter." });
@@ -624,7 +632,7 @@ const CONFIG_SCHEMA_TTL_MS = 30_000;
  */
 router.get("/:type/config-schema", async (req, res) => {
   try {
-    const { type } = req.params;
+    const type = normalizeAdapterType(req.params.type);
 
     const adapter = findActiveServerAdapter(type);
     if (!adapter) {
@@ -658,7 +666,7 @@ router.get("/:type/config-schema", async (req, res) => {
  * Get adapter's custom run-log parser
  */
 router.get("/:type/ui-parser.js", (req, res) => {
-  const { type } = req.params;
+  const type = normalizeAdapterType(req.params.type);
   const source = getOrExtractUiParserSource(type);
   if (!source) {
     res.status(404).json({ error: `No UI parser available for adapter "${type}".` });

@@ -2,15 +2,15 @@
  * Adapter types shipped with Paperclip. External plugins must not replace these.
  */
 export const BUILTIN_ADAPTER_TYPES = new Set([
-  "claude_local",
-  "codex_local",
-  "cursor",
-  "gemini_local",
-  "openclaw_gateway",
-  "opencode_local",
-  "opencode_remote",
-  "pi_local",
-  "hermes_local",
+  "claude-local",
+  "codex-local",
+  "cursor-local",
+  "gemini-local",
+  "openclaw-gateway",
+  "opencode-local",
+  "opencode-remote",
+  "pi-local",
+  "hermes-local",
   "process",
   "http",
 ]);
