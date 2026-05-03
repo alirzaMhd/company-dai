@@ -78,7 +78,9 @@ fi
 
 if [ "$1" == "prod" ] || [ -z "$1" ]; then
     echo "Starting in PRODUCTION mode..."
-    
+
+    export NODE_ENV=production
+
     echo "Starting server..."
     pnpm -F server start &
     SERVER_PID=$!
