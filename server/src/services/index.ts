@@ -6,6 +6,24 @@ export const companyService = {
   delete: async (id: string) => true,
 };
 
+export const accessService = {
+  list: async () => [],
+  get: async (id: string) => null,
+  create: async (data: any) => data,
+  update: async (id: string, data: any) => data,
+  delete: async (id: string) => true,
+};
+
+export const boardAuthService = {
+  verifyApiKey: async (key: string) => null,
+  createKey: async (data: any) => data,
+  deleteKey: async (id: string) => true,
+  listKeys: async () => [],
+};
+
+export const deduplicateAgentName = async (name: string, companyId: string) => name;
+export const notifyHireApproved = async (userId: string, companyId: string) => {};
+
 export const agentService = {
   list: async () => [],
   get: async (id: string) => null,
