@@ -389,10 +389,6 @@ export function OnboardingWizard() {
     setError(null);
     try {
       const company = await companiesApi.create({ name: companyName.trim() });
-      console.log("[DEBUG] OnboardingWizard company response:", JSON.stringify(company));
-      if (!company.id) {
-        throw new Error(`Failed to create company: response was ${JSON.stringify(company)}`);
-      }
       setCreatedCompanyId(company.id);
       setCreatedCompanyPrefix(company.issuePrefix);
       setSelectedCompanyId(company.id);
@@ -400,7 +396,6 @@ export function OnboardingWizard() {
 
       if (companyGoal.trim()) {
         const parsedGoal = parseOnboardingGoalInput(companyGoal);
-        console.log("[DEBUG] Creating goal with companyId:", company.id, "companyId type:", typeof company.id);
         const goal = await goalsApi.create(company.id, {
           title: parsedGoal.title,
           ...(parsedGoal.description
