@@ -9,6 +9,13 @@ export interface Config {
   port: number;
   authSecret: string;
   databaseUrl: string;
+  storageProvider: "local_disk" | "s3";
+  storageLocalDiskBaseDir: string;
+  storageS3Bucket: string;
+  storageS3Region: string;
+  storageS3Endpoint?: string;
+  storageS3Prefix?: string;
+  storageS3ForcePathStyle?: boolean;
 }
 
 function getDeploymentMode(): DeploymentMode {
@@ -65,6 +72,13 @@ export const config: Config = {
   port: parseInt(process.env.PORT || "3001", 10),
   authSecret: process.env.COMPANY_DAI_AUTH_SECRET || "development-secret-change-in-production",
   databaseUrl: getDatabaseUrl(),
+  storageProvider: (process.env.STORAGE_PROVIDER as "local_disk" | "s3") || "local_disk",
+  storageLocalDiskBaseDir: process.env.STORAGE_LOCAL_DISK_BASE_DIR || resolve(process.cwd(), "storage"),
+  storageS3Bucket: process.env.STORAGE_S3_BUCKET || "",
+  storageS3Region: process.env.STORAGE_S3_REGION || "us-east-1",
+  storageS3Endpoint: process.env.STORAGE_S3_ENDPOINT,
+  storageS3Prefix: process.env.STORAGE_S3_PREFIX,
+  storageS3ForcePathStyle: process.env.STORAGE_S3_FORCE_PATH_STYLE === "true",
 };
 
 export function isLocalTrusted(): boolean {
