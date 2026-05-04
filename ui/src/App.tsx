@@ -200,6 +200,18 @@ function CompanyRootRedirect() {
 
   const targetCompany = selectedCompany ?? companies[0] ?? null;
 
+  // Final decision debug
+  useEffect(() => {
+    const decision = targetCompany 
+      ? `REDIRECT to /${targetCompany.issuePrefix}/dashboard` 
+      : companies.length > 0 
+        ? `REDIRECT to /${companies[0].issuePrefix}/dashboard (FIX)` 
+        : "REDIRECT to /onboarding";
+    fetch(`/api/debug-log?message=FINAL: ${decision}`)
+      .then(() => {})
+      .catch(() => {});
+  }, [targetCompany, companies.length]);
+
   if (!targetCompany) {
     fetch(`/api/debug-log?message=no targetCompany: selectedCompany=${selectedCompany}, companies[0]=${companies[0]}, length=${companies.length}`)
       .then(() => {})
