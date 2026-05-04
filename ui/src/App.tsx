@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Route, Routes, useLocation, useParams } from "@/lib/router";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "./components/Layout";
 import { OnboardingWizard } from "./components/OnboardingWizard";
@@ -179,18 +180,29 @@ function CompanyRootRedirect() {
   const { companies, selectedCompany, loading, fetching } = useCompany();
   const location = useLocation();
 
+  console.log("[DEBUG] CompanyRootRedirect:", {
+    companies,
+    companiesLength: companies?.length,
+    selectedCompany,
+    loading,
+    fetching,
+  });
+
   if (loading || fetching) {
     return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
   }
 
-  const targetCompany = selectedCompany ?? companies[0] ?? null;
+  console.log("[DEBUG] targetCompany:", targetCompany, "hasCompanies:", companies.length > 0);
+
   if (!targetCompany) {
+    console.log("[DEBUG] CompanyRootRedirect: no targetCompany, checking redirect...");
     if (
       shouldRedirectCompanylessRouteToOnboarding({
         pathname: location.pathname,
-        hasCompanies: false,
+        hasCompanies: companies.length > 0,
       })
     ) {
+      console.log("[DEBUG] CompanyRootRedirect: redirecting to /onboarding");
       return <Navigate to="/onboarding" replace />;
     }
     return <NoCompaniesStartPage />;
@@ -212,7 +224,7 @@ function UnprefixedBoardRedirect() {
     if (
       shouldRedirectCompanylessRouteToOnboarding({
         pathname: location.pathname,
-        hasCompanies: false,
+        hasCompanies: companies.length > 0,
       })
     ) {
       return <Navigate to="/onboarding" replace />;
