@@ -809,20 +809,22 @@ function IssueDetailActivityTab({
   });
   const { data: linkedApprovals } = useQuery({
     queryKey: queryKeys.issues.approvals(issueId),
-    queryFn: () => issuesApi.listApprovals(issueId),
+    queryFn: () => issuesApi.listApprovals(selectedCompanyId!, issueId),
     placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnType<typeof issuesApi.listApprovals>>>(issueId),
+    enabled: !!selectedCompanyId,
   });
   const { data: continuationHandoff } = useQuery({
     queryKey: queryKeys.issues.document(issueId, ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY),
     queryFn: async () => {
       try {
-        return await issuesApi.getDocument(issueId, ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY);
+        return await issuesApi.getDocument(selectedCompanyId!, issueId, ISSUE_CONTINUATION_SUMMARY_DOCUMENT_KEY);
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) return null;
         throw error;
       }
     },
     retry: false,
+    enabled: !!selectedCompanyId,
     placeholderData: keepPreviousDataForSameQueryTail<Awaited<ReturnType<typeof issuesApi.getDocument>> | null>(
       issueId,
     ),
@@ -992,13 +994,13 @@ export function IssueDetail() {
   );
 
   const { data: issue, isLoading, error } = useQuery({
-    ...getIssueDetailQueryOptions(queryClient, issueId!, {
+    ...getIssueDetailQueryOptions(queryClient, selectedCompanyId!, issueId!, {
       placeholderIssue: issueHeaderSeed ? {
         id: issueHeaderSeed.id,
         identifier: issueHeaderSeed.identifier,
       } : null,
     }),
-    enabled: !!issueId,
+    enabled: !!issueId && !!selectedCompanyId,
   });
   const resolvedCompanyId = issue?.companyId ?? selectedCompanyId;
   const commentComposerDisabledReason = useMemo(() => {
@@ -1017,12 +1019,12 @@ export function IssueDetail() {
   } = useInfiniteQuery({
     queryKey: queryKeys.issues.comments(issueId!),
     queryFn: ({ pageParam }) =>
-      issuesApi.listComments(issueId!, {
+      issuesApi.listComments(selectedCompanyId!, issueId!, {
         order: "desc",
         limit: ISSUE_COMMENT_PAGE_SIZE,
         ...(pageParam ? { after: pageParam } : {}),
       }),
-    enabled: !!issueId,
+    enabled: !!issueId && !!selectedCompanyId,
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) =>
       getNextIssueCommentPageParam(lastPage, ISSUE_COMMENT_PAGE_SIZE),
@@ -1034,14 +1036,14 @@ export function IssueDetail() {
   );
   const { data: interactions = [] } = useQuery({
     queryKey: queryKeys.issues.interactions(issueId!),
-    queryFn: () => issuesApi.listInteractions(issueId!),
+    queryFn: () => issuesApi.listInteractions(selectedCompanyId!, issueId!),
     enabled: !!issueId,
     placeholderData: keepPreviousDataForSameQueryTail<IssueThreadInteraction[]>(issueId ?? "pending"),
   });
 
   const { data: attachments, isLoading: attachmentsLoading } = useQuery({
     queryKey: queryKeys.issues.attachments(issueId!),
-    queryFn: () => issuesApi.listAttachments(issueId!),
+    queryFn: () => issuesApi.listAttachments(selectedCompanyId!, issueId!),
     enabled: !!issueId,
     placeholderData: keepPreviousDataForSameQueryTail<IssueAttachment[]>(issueId ?? "pending"),
   });
@@ -1116,7 +1118,7 @@ export function IssueDetail() {
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
   const { data: feedbackVotes } = useQuery({
     queryKey: queryKeys.issues.feedbackVotes(issueId!),
-    queryFn: () => issuesApi.listFeedbackVotes(issueId!),
+    queryFn: () => issuesApi.listFeedbackVotes(selectedCompanyId!, issueId!),
     enabled: !!issueId && !!currentUserId,
   });
   const { data: instanceGeneralSettings } = useQuery({
@@ -1324,7 +1326,7 @@ export function IssueDetail() {
   }, [queryClient, selectedCompanyId]);
 
   const markIssueRead = useMutation({
-    mutationFn: (id: string) => issuesApi.markRead(id),
+    mutationFn: (id: string) => issuesApi.markRead(selectedCompanyId!, id),
     onSuccess: () => {
       if (selectedCompanyId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.issues.listMineByMe(selectedCompanyId) });
@@ -1336,7 +1338,7 @@ export function IssueDetail() {
   });
 
   const updateIssue = useMutation({
-    mutationFn: (data: Record<string, unknown>) => issuesApi.update(issueId!, data),
+    mutationFn: (data: Record<string, unknown>) => issuesApi.update(selectedCompanyId!, issueId!, data),
     onMutate: async (data) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.issues.detail(issueId!) });
       if (selectedCompanyId) {
@@ -1391,7 +1393,7 @@ export function IssueDetail() {
   }, [updateIssue.mutate]);
 
   const updateChildIssue = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => issuesApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => issuesApi.update(selectedCompanyId!, id, data),
     onSuccess: () => {
       if (resolvedCompanyId) {
         queryClient.invalidateQueries({ queryKey: ["issues", resolvedCompanyId] });
@@ -1447,7 +1449,7 @@ export function IssueDetail() {
 
   const addComment = useMutation({
     mutationFn: ({ body, reopen, interrupt }: { body: string; reopen?: boolean; interrupt?: boolean }) =>
-      issuesApi.addComment(issueId!, body, reopen, interrupt),
+      issuesApi.addComment(selectedCompanyId!, issueId!, body, reopen, interrupt),
     onMutate: async ({ body, reopen, interrupt }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.issues.comments(issueId!) });
       await queryClient.cancelQueries({ queryKey: queryKeys.issues.detail(issueId!) });
@@ -1490,7 +1492,7 @@ export function IssueDetail() {
       if (context?.optimisticCommentId && cancelledQueuedOptimisticCommentIdsRef.current.has(context.optimisticCommentId)) {
         cancelledQueuedOptimisticCommentIdsRef.current.delete(context.optimisticCommentId);
         try {
-          await issuesApi.cancelComment(issueId!, comment.id);
+          await issuesApi.cancelComment(selectedCompanyId!, issueId!, comment.id);
           invalidateIssueDetail();
           invalidateIssueThreadLazily();
           invalidateIssueCollections();
@@ -1553,7 +1555,7 @@ export function IssueDetail() {
     }: {
       interaction: ActionableIssueThreadInteraction;
       selectedClientKeys?: string[];
-    }) => issuesApi.acceptInteraction(issueId!, interaction.id, { selectedClientKeys }),
+    }) => issuesApi.acceptInteraction(selectedCompanyId!, issueId!, interaction.id, { selectedClientKeys }),
     onSuccess: (interaction) => {
       upsertInteractionInCache(interaction);
       if (interaction.kind === "suggest_tasks" && resolvedCompanyId && issue?.id) {
@@ -1586,7 +1588,7 @@ export function IssueDetail() {
   });
   const rejectInteraction = useMutation({
     mutationFn: ({ interaction, reason }: { interaction: ActionableIssueThreadInteraction; reason?: string }) =>
-      issuesApi.rejectInteraction(issueId!, interaction.id, reason),
+      issuesApi.rejectInteraction(selectedCompanyId!, issueId!, interaction.id, reason),
     onSuccess: (interaction) => {
       upsertInteractionInCache(interaction);
       invalidateIssueDetail();
@@ -1611,7 +1613,7 @@ export function IssueDetail() {
     }: {
       interaction: IssueThreadInteraction;
       answers: AskUserQuestionsAnswer[];
-    }) => issuesApi.respondToInteraction(issueId!, interaction.id, { answers }),
+    }) => issuesApi.respondToInteraction(selectedCompanyId!, issueId!, interaction.id, { answers }),
     onSuccess: (interaction) => {
       upsertInteractionInCache(interaction);
       invalidateIssueDetail();
@@ -1642,7 +1644,7 @@ export function IssueDetail() {
       interrupt?: boolean;
       reassignment: CommentReassignment;
     }) =>
-      issuesApi.update(issueId!, {
+      issuesApi.update(selectedCompanyId!, issueId!, {
         comment: body,
         assigneeAgentId: reassignment.assigneeAgentId,
         assigneeUserId: reassignment.assigneeUserId,
@@ -1694,7 +1696,7 @@ export function IssueDetail() {
       if (comment && context?.optimisticCommentId && cancelledQueuedOptimisticCommentIdsRef.current.has(context.optimisticCommentId)) {
         cancelledQueuedOptimisticCommentIdsRef.current.delete(context.optimisticCommentId);
         try {
-          await issuesApi.cancelComment(issueId!, comment.id);
+          await issuesApi.cancelComment(selectedCompanyId!, issueId!, comment.id);
           invalidateIssueDetail();
           invalidateIssueThreadLazily();
           invalidateIssueCollections();
@@ -1831,7 +1833,7 @@ export function IssueDetail() {
   });
 
   const cancelQueuedComment = useMutation({
-    mutationFn: async ({ commentId }: { commentId: string }) => issuesApi.cancelComment(issueId!, commentId),
+    mutationFn: async ({ commentId }: { commentId: string }) => issuesApi.cancelComment(selectedCompanyId!, issueId!, commentId),
     onSuccess: (comment) => {
       setLocallyQueuedCommentRunIds((current) => {
         if (!current.has(comment.id)) return current;
@@ -1891,7 +1893,7 @@ export function IssueDetail() {
       allowSharing?: boolean;
       sharingPreferenceAtSubmit: "allowed" | "not_allowed" | "prompt";
     }) =>
-      issuesApi.upsertFeedbackVote(issueId!, {
+      issuesApi.upsertFeedbackVote(selectedCompanyId!, issueId!, {
         targetType: variables.targetType,
         targetId: variables.targetId,
         vote: variables.vote,
@@ -1970,7 +1972,7 @@ export function IssueDetail() {
       const body = await file.text();
       const inferredTitle = titleizeFilename(baseName);
       const nextTitle = existing?.title ?? inferredTitle ?? null;
-      return issuesApi.upsertDocument(issueId!, key, {
+      return issuesApi.upsertDocument(selectedCompanyId!, issueId!, key, {
         title: key === "plan" ? null : nextTitle,
         format: "markdown",
         body,
@@ -1988,7 +1990,7 @@ export function IssueDetail() {
   });
 
   const deleteAttachment = useMutation({
-    mutationFn: (attachmentId: string) => issuesApi.deleteAttachment(attachmentId),
+    mutationFn: (attachmentId: string) => issuesApi.deleteAttachment(selectedCompanyId!, attachmentId),
     onSuccess: () => {
       setAttachmentError(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.attachments(issueId!) });
@@ -2000,7 +2002,7 @@ export function IssueDetail() {
   });
 
   const archiveFromInbox = useMutation({
-    mutationFn: (id: string) => issuesApi.archiveFromInbox(id),
+    mutationFn: (id: string) => issuesApi.archiveFromInbox(selectedCompanyId!, id),
     onSuccess: () => {
       invalidateIssueCollections();
       navigate(sourceBreadcrumb.href.startsWith("/inbox") ? sourceBreadcrumb.href : "/inbox", { replace: true });

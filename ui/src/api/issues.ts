@@ -67,26 +67,27 @@ export const issuesApi = {
   listLabels: (companyId: string) => api.get<IssueLabel[]>(`/companies/${companyId}/labels`),
   createLabel: (companyId: string, data: { name: string; color: string }) =>
     api.post<IssueLabel>(`/companies/${companyId}/labels`, data),
-  deleteLabel: (id: string) => api.delete<IssueLabel>(`/labels/${id}`),
-  get: (id: string) => api.get<Issue>(`/issues/${id}`),
-  markRead: (id: string) => api.post<{ id: string; lastReadAt: Date }>(`/issues/${id}/read`, {}),
-  markUnread: (id: string) => api.delete<{ id: string; removed: boolean }>(`/issues/${id}/read`),
-  archiveFromInbox: (id: string) =>
-    api.post<{ id: string; archivedAt: Date }>(`/issues/${id}/inbox-archive`, {}),
-  unarchiveFromInbox: (id: string) =>
-    api.delete<{ id: string; archivedAt: Date } | { ok: true }>(`/issues/${id}/inbox-archive`),
+  deleteLabel: (companyId: string, id: string) => api.delete<IssueLabel>(`/companies/${companyId}/labels/${id}`),
+  get: (companyId: string, id: string) => api.get<Issue>(`/companies/${companyId}/issues/${id}`),
+  markRead: (companyId: string, id: string) => api.post<{ id: string; lastReadAt: Date }>(`/companies/${companyId}/issues/${id}/read`, {}),
+  markUnread: (companyId: string, id: string) => api.delete<{ id: string; removed: boolean }>(`/companies/${companyId}/issues/${id}/read`),
+  archiveFromInbox: (companyId: string, id: string) =>
+    api.post<{ id: string; archivedAt: Date }>(`/companies/${companyId}/issues/${id}/inbox-archive`, {}),
+  unarchiveFromInbox: (companyId: string, id: string) =>
+    api.delete<{ id: string; archivedAt: Date } | { ok: true }>(`/companies/${companyId}/issues/${id}/inbox-archive`),
   create: (companyId: string, data: Record<string, unknown>) =>
     api.post<Issue>(`/companies/${companyId}/issues`, data),
-  update: (id: string, data: Record<string, unknown>) =>
-    api.patch<IssueUpdateResponse>(`/issues/${id}`, data),
-  remove: (id: string) => api.delete<Issue>(`/issues/${id}`),
-  checkout: (id: string, agentId: string) =>
-    api.post<Issue>(`/issues/${id}/checkout`, {
+  update: (companyId: string, id: string, data: Record<string, unknown>) =>
+    api.patch<IssueUpdateResponse>(`/companies/${companyId}/issues/${id}`, data),
+  remove: (companyId: string, id: string) => api.delete<Issue>(`/companies/${companyId}/issues/${id}`),
+  checkout: (companyId: string, id: string, agentId: string) =>
+    api.post<Issue>(`/companies/${companyId}/issues/${id}/checkout`, {
       agentId,
       expectedStatuses: ["todo", "backlog", "blocked", "in_review"],
     }),
-  release: (id: string) => api.post<Issue>(`/issues/${id}/release`, {}),
+  release: (companyId: string, id: string) => api.post<Issue>(`/companies/${companyId}/issues/${id}/release`, {}),
   listComments: (
+    companyId: string,
     id: string,
     filters?: {
       after?: string;
@@ -99,39 +100,42 @@ export const issuesApi = {
     if (filters?.order) params.set("order", filters.order);
     if (filters?.limit) params.set("limit", String(filters.limit));
     const qs = params.toString();
-    return api.get<IssueComment[]>(`/issues/${id}/comments${qs ? `?${qs}` : ""}`);
+    return api.get<IssueComment[]>(`/companies/${companyId}/issues/${id}/comments${qs ? `?${qs}` : ""}`);
   },
-  listInteractions: (id: string) =>
-    api.get<IssueThreadInteraction[]>(`/issues/${id}/interactions`),
-  createInteraction: (id: string, data: Record<string, unknown>) =>
-    api.post<IssueThreadInteraction>(`/issues/${id}/interactions`, data),
+  listInteractions: (companyId: string, id: string) =>
+    api.get<IssueThreadInteraction[]>(`/companies/${companyId}/issues/${id}/interactions`),
+  createInteraction: (companyId: string, id: string, data: Record<string, unknown>) =>
+    api.post<IssueThreadInteraction>(`/companies/${companyId}/issues/${id}/interactions`, data),
   acceptInteraction: (
+    companyId: string,
     id: string,
     interactionId: string,
     data?: { selectedClientKeys?: string[] },
   ) =>
-    api.post<IssueThreadInteraction>(`/issues/${id}/interactions/${interactionId}/accept`, data ?? {}),
-  rejectInteraction: (id: string, interactionId: string, reason?: string) =>
-    api.post<IssueThreadInteraction>(`/issues/${id}/interactions/${interactionId}/reject`, reason ? { reason } : {}),
+    api.post<IssueThreadInteraction>(`/companies/${companyId}/issues/${id}/interactions/${interactionId}/accept`, data ?? {}),
+  rejectInteraction: (companyId: string, id: string, interactionId: string, reason?: string) =>
+    api.post<IssueThreadInteraction>(`/companies/${companyId}/issues/${id}/interactions/${interactionId}/reject`, reason ? { reason } : {}),
   respondToInteraction: (
+    companyId: string,
     id: string,
     interactionId: string,
     data: { answers: AskUserQuestionsAnswer[]; summaryMarkdown?: string | null },
   ) =>
-    api.post<IssueThreadInteraction>(`/issues/${id}/interactions/${interactionId}/respond`, data),
-  getComment: (id: string, commentId: string) =>
-    api.get<IssueComment>(`/issues/${id}/comments/${commentId}`),
-  listFeedbackVotes: (id: string) => api.get<FeedbackVote[]>(`/issues/${id}/feedback-votes`),
-  listFeedbackTraces: (id: string, filters?: Record<string, string | boolean | undefined>) => {
+    api.post<IssueThreadInteraction>(`/companies/${companyId}/issues/${id}/interactions/${interactionId}/respond`, data),
+  getComment: (companyId: string, id: string, commentId: string) =>
+    api.get<IssueComment>(`/companies/${companyId}/issues/${id}/comments/${commentId}`),
+  listFeedbackVotes: (companyId: string, id: string) => api.get<FeedbackVote[]>(`/companies/${companyId}/issues/${id}/feedback-votes`),
+  listFeedbackTraces: (companyId: string, id: string, filters?: Record<string, string | boolean | undefined>) => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filters ?? {})) {
       if (value === undefined) continue;
       params.set(key, String(value));
     }
     const qs = params.toString();
-    return api.get<FeedbackTrace[]>(`/issues/${id}/feedback-traces${qs ? `?${qs}` : ""}`);
+    return api.get<FeedbackTrace[]>(`/companies/${companyId}/issues/${id}/feedback-traces${qs ? `?${qs}` : ""}`);
   },
   upsertFeedbackVote: (
+    companyId: string,
     id: string,
     data: {
       targetType: FeedbackTargetType;
@@ -140,32 +144,32 @@ export const issuesApi = {
       reason?: string;
       allowSharing?: boolean;
     },
-  ) => api.post<FeedbackVote>(`/issues/${id}/feedback-votes`, data),
-  addComment: (id: string, body: string, reopen?: boolean, interrupt?: boolean) =>
+  ) => api.post<FeedbackVote>(`/companies/${companyId}/issues/${id}/feedback-votes`, data),
+  addComment: (companyId: string, id: string, body: string, reopen?: boolean, interrupt?: boolean) =>
     api.post<IssueComment>(
-      `/issues/${id}/comments`,
+      `/companies/${companyId}/issues/${id}/comments`,
       {
         body,
         ...(reopen === undefined ? {} : { reopen }),
         ...(interrupt === undefined ? {} : { interrupt }),
       },
     ),
-  cancelComment: (id: string, commentId: string) =>
-    api.delete<IssueComment>(`/issues/${id}/comments/${commentId}`),
-  listDocuments: (id: string, options?: { includeSystem?: boolean }) =>
+  cancelComment: (companyId: string, id: string, commentId: string) =>
+    api.delete<IssueComment>(`/companies/${companyId}/issues/${id}/comments/${commentId}`),
+  listDocuments: (companyId: string, id: string, options?: { includeSystem?: boolean }) =>
     api.get<IssueDocument[]>(
-      `/issues/${id}/documents${options?.includeSystem ? "?includeSystem=true" : ""}`,
+      `/companies/${companyId}/issues/${id}/documents${options?.includeSystem ? "?includeSystem=true" : ""}`,
     ),
-  getDocument: (id: string, key: string) => api.get<IssueDocument>(`/issues/${id}/documents/${encodeURIComponent(key)}`),
-  upsertDocument: (id: string, key: string, data: UpsertIssueDocument) =>
-    api.put<IssueDocument>(`/issues/${id}/documents/${encodeURIComponent(key)}`, data),
-  listDocumentRevisions: (id: string, key: string) =>
-    api.get<DocumentRevision[]>(`/issues/${id}/documents/${encodeURIComponent(key)}/revisions`),
-  restoreDocumentRevision: (id: string, key: string, revisionId: string) =>
-    api.post<IssueDocument>(`/issues/${id}/documents/${encodeURIComponent(key)}/revisions/${revisionId}/restore`, {}),
-  deleteDocument: (id: string, key: string) =>
-    api.delete<{ ok: true }>(`/issues/${id}/documents/${encodeURIComponent(key)}`),
-  listAttachments: (id: string) => api.get<IssueAttachment[]>(`/issues/${id}/attachments`),
+  getDocument: (companyId: string, id: string, key: string) => api.get<IssueDocument>(`/companies/${companyId}/issues/${id}/documents/${encodeURIComponent(key)}`),
+  upsertDocument: (companyId: string, id: string, key: string, data: UpsertIssueDocument) =>
+    api.put<IssueDocument>(`/companies/${companyId}/issues/${id}/documents/${encodeURIComponent(key)}`, data),
+  listDocumentRevisions: (companyId: string, id: string, key: string) =>
+    api.get<DocumentRevision[]>(`/companies/${companyId}/issues/${id}/documents/${encodeURIComponent(key)}/revisions`),
+  restoreDocumentRevision: (companyId: string, id: string, key: string, revisionId: string) =>
+    api.post<IssueDocument>(`/companies/${companyId}/issues/${id}/documents/${encodeURIComponent(key)}/revisions/${revisionId}/restore`, {}),
+  deleteDocument: (companyId: string, id: string, key: string) =>
+    api.delete<{ ok: true }>(`/companies/${companyId}/issues/${id}/documents/${encodeURIComponent(key)}`),
+  listAttachments: (companyId: string, id: string) => api.get<IssueAttachment[]>(`/companies/${companyId}/issues/${id}/attachments`),
   uploadAttachment: (
     companyId: string,
     issueId: string,
@@ -179,16 +183,16 @@ export const issuesApi = {
     }
     return api.postForm<IssueAttachment>(`/companies/${companyId}/issues/${issueId}/attachments`, form);
   },
-  deleteAttachment: (id: string) => api.delete<{ ok: true }>(`/attachments/${id}`),
-  listApprovals: (id: string) => api.get<Approval[]>(`/issues/${id}/approvals`),
-  linkApproval: (id: string, approvalId: string) =>
-    api.post<Approval[]>(`/issues/${id}/approvals`, { approvalId }),
-  unlinkApproval: (id: string, approvalId: string) =>
-    api.delete<{ ok: true }>(`/issues/${id}/approvals/${approvalId}`),
-  listWorkProducts: (id: string) => api.get<IssueWorkProduct[]>(`/issues/${id}/work-products`),
-  createWorkProduct: (id: string, data: Record<string, unknown>) =>
-    api.post<IssueWorkProduct>(`/issues/${id}/work-products`, data),
-  updateWorkProduct: (id: string, data: Record<string, unknown>) =>
-    api.patch<IssueWorkProduct>(`/work-products/${id}`, data),
-  deleteWorkProduct: (id: string) => api.delete<IssueWorkProduct>(`/work-products/${id}`),
+  deleteAttachment: (companyId: string, id: string) => api.delete<{ ok: true }>(`/companies/${companyId}/attachments/${id}`),
+  listApprovals: (companyId: string, id: string) => api.get<Approval[]>(`/companies/${companyId}/issues/${id}/approvals`),
+  linkApproval: (companyId: string, id: string, approvalId: string) =>
+    api.post<Approval[]>(`/companies/${companyId}/issues/${id}/approvals`, { approvalId }),
+  unlinkApproval: (companyId: string, id: string, approvalId: string) =>
+    api.delete<{ ok: true }>(`/companies/${companyId}/issues/${id}/approvals/${approvalId}`),
+  listWorkProducts: (companyId: string, id: string) => api.get<IssueWorkProduct[]>(`/companies/${companyId}/issues/${id}/work-products`),
+  createWorkProduct: (companyId: string, id: string, data: Record<string, unknown>) =>
+    api.post<IssueWorkProduct>(`/companies/${companyId}/issues/${id}/work-products`, data),
+  updateWorkProduct: (companyId: string, id: string, data: Record<string, unknown>) =>
+    api.patch<IssueWorkProduct>(`/companies/${companyId}/work-products/${id}`, data),
+  deleteWorkProduct: (companyId: string, id: string) => api.delete<IssueWorkProduct>(`/companies/${companyId}/work-products/${id}`),
 };

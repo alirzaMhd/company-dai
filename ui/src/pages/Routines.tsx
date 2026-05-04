@@ -397,7 +397,7 @@ export function Routines() {
   });
   const updateIssue = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      issuesApi.update(id, data),
+      issuesApi.update(selectedCompanyId!, id, data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: [...queryKeys.issues.list(selectedCompanyId!), "routine-executions"] });
     },

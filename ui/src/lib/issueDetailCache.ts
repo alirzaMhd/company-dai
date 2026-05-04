@@ -78,14 +78,16 @@ export function seedIssueDetailCache(
 
 export async function fetchIssueDetail(
   queryClient: QueryClient,
+  companyId: string,
   issueRef: string,
 ): Promise<Issue> {
-  const issue = await issuesApi.get(issueRef);
+  const issue = await issuesApi.get(companyId, issueRef);
   return seedIssueDetailCache(queryClient, issue, { issueRef });
 }
 
 export function getIssueDetailQueryOptions(
   queryClient: QueryClient,
+  companyId: string,
   issueRef: string,
   options?: {
     placeholderIssue?: Pick<Issue, "id" | "identifier"> | null;
@@ -93,13 +95,14 @@ export function getIssueDetailQueryOptions(
 ) {
   return {
     queryKey: queryKeys.issues.detail(issueRef),
-    queryFn: () => fetchIssueDetail(queryClient, issueRef),
+    queryFn: () => fetchIssueDetail(queryClient, companyId, issueRef),
     placeholderData: getCachedIssueDetail(queryClient, issueRef, options?.placeholderIssue ?? undefined),
   };
 }
 
 export function prefetchIssueDetail(
   queryClient: QueryClient,
+  companyId: string,
   issueRef: string,
   options?: {
     issue?: Issue | null;
@@ -111,7 +114,7 @@ export function prefetchIssueDetail(
 
   return queryClient.prefetchQuery({
     queryKey: queryKeys.issues.detail(issueRef),
-    queryFn: () => fetchIssueDetail(queryClient, issueRef),
+    queryFn: () => fetchIssueDetail(queryClient, companyId, issueRef),
     staleTime: ISSUE_DETAIL_STALE_TIME_MS,
   });
 }
