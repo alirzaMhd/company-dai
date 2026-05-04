@@ -183,6 +183,7 @@ function CompanyRootRedirect() {
   console.log("[DEBUG] CompanyRootRedirect:", {
     companies,
     companiesLength: companies?.length,
+    companiesJson: JSON.stringify(companies),
     selectedCompany,
     loading,
     fetching,
@@ -196,7 +197,18 @@ function CompanyRootRedirect() {
   console.log("[DEBUG] targetCompany:", targetCompany, "hasCompanies:", companies.length > 0, "pathname:", location.pathname);
 
   if (!targetCompany) {
-    console.log("[DEBUG] CompanyRootRedirect: no targetCompany, checking redirect...");
+    console.log("[DEBUG] CompanyRootRedirect: no targetCompany!");
+    console.log("[DEBUG] selectedCompany is:", selectedCompany);
+    console.log("[DEBUG] companies[0] is:", companies[0]);
+    console.log("[DEBUG] companies.length is:", companies?.length);
+    
+    if (companies.length > 0) {
+      console.log("[DEBUG] FIX: companies exist but targetCompany is null - redirecting to dashboard");
+      const firstCompany = companies[0];
+      return <Navigate to={`/${firstCompany.issuePrefix}/dashboard`} replace />;
+    }
+    
+    console.log("[DEBUG] no companies, checking redirect...");
     if (
       shouldRedirectCompanylessRouteToOnboarding({
         pathname: location.pathname,
