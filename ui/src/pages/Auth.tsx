@@ -35,15 +35,15 @@ export function AuthPage() {
 
   const getRedirectPath = () => {
     if (nextPath && nextPath !== "/") return nextPath;
-    if (companies.length === 0) return "/onboarding";
-    return "/dashboard";
+    return "/";
   };
 
   useEffect(() => {
     if (session && !isSessionLoading && !companiesLoading) {
-      navigate(getRedirectPath(), { replace: true });
+      const target = getRedirectPath();
+      navigate(target, { replace: true });
     }
-  }, [session, isSessionLoading, companiesLoading, navigate, companies]);
+  }, [session, isSessionLoading, companiesLoading, navigate]);
 
   const mutation = useMutation({
     mutationFn: async () => {

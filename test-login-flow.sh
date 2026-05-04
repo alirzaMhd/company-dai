@@ -78,21 +78,33 @@ test_auth_flow() {
     USER_ID=$(echo "$SESSION_RESPONSE" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
     echo "User ID: $USER_ID"
     
-    echo "Step 3: Check user's companies (should only return user's companies, not the whole db)"
+    echo "Step 3: Login flow - hit root path to see actual client-side redirect"
+    ROOT_RESPONSE=$(curl -s -L -w "%{url_effective}\\n%{http_code}" http://localhost:$SERVER_PORT/ \
+        -b "$COOKIE_JAR")
+    echo "Root path response (with redirect follow): $ROOT_RESPONSE"
+    
+    echo ""
+    echo "Step 4: Check user's companies to determine expected redirect"
     COMPANIES_RESPONSE=$(curl -s http://localhost:$SERVER_PORT/api/companies \
         -b "$COOKIE_JAR")
-    echo "Companies response: $COMPANIES_RESPONSE"
     
     COMPANY_COUNT=$(echo "$COMPANIES_RESPONSE" | grep -o '"id"' | wc -l)
     echo "Company count for user: $COMPANY_COUNT"
     
+    FIRST_ISSUE_PREFIX=$(echo "$COMPANIES_RESPONSE" | grep -o '"issuePrefix":"[^"]*"' | head -1 | cut -d'"' -f4)
+    echo "First company issue prefix: $FIRST_ISSUE_PREFIX"
+    
     if [ "$COMPANY_COUNT" -eq 0 ]; then
-        echo "User has NO company - should redirect to /onboarding"
-        echo "TEST PASSED: User correctly has no company and should go to /onboarding"
+        EXPECTED_REDIRECT="/onboarding"
+        echo ""
+        echo "=== RESULT ==="
+        echo "Expected redirect: $EXPECTED_REDIRECT"
         return 0
     else
-        echo "User HAS company(s) - should redirect to /dashboard"
-        echo "TEST PASSED: User correctly has company and should go to /dashboard"
+        EXPECTED_REDIRECT="/${FIRST_ISSUE_PREFIX}/dashboard"
+        echo ""
+        echo "=== RESULT ==="
+        echo "Expected redirect: $EXPECTED_REDIRECT"
         return 0
     fi
 }

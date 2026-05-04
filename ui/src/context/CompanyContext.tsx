@@ -10,6 +10,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Company } from "@paperclipai/shared";
 import { companiesApi } from "../api/companies";
+import { authApi } from "../api/auth";
 import { ApiError } from "../api/client";
 import { queryKeys } from "../lib/queryKeys";
 import type { CompanySelectionSource } from "../lib/company-selection";
@@ -40,6 +41,18 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [selectionSource, setSelectionSource] = useState<CompanySelectionSource>("bootstrap");
   const [selectedCompanyId, setSelectedCompanyIdState] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY));
+
+  const { data: session } = useQuery({
+    queryKey: queryKeys.auth.session,
+    queryFn: () => authApi.getSession(),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (session) {
+      queryClient.resetQueries({ queryKey: queryKeys.companies.all });
+    }
+  }, [session, queryClient]);
 
   const { data: companies = [], isLoading, isFetching, error } = useQuery({
     queryKey: queryKeys.companies.all,
