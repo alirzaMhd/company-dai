@@ -200,6 +200,10 @@ function CompanyRootRedirect() {
 
   const targetCompany = selectedCompany ?? companies[0] ?? null;
 
+  fetch(`/api/debug-log?message=BEFORE: targetCompany=${!!targetCompany}, companies[0]=${companies[0]?.name}, sel=${selectedCompany?.name}, len=${companies.length}`)
+    .then(() => {})
+    .catch(() => {});
+
   // Final decision debug
   useEffect(() => {
     const decision = targetCompany 
