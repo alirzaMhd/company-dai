@@ -9,9 +9,11 @@ const router = Router();
 router.get("/", async (req, res) => {
   try {
     const result = await db.select().from(companies);
+    console.log("[DEBUG] /api/companies result:", result.length, "rows", req.actor?.userId ? `userId=${req.actor.userId}` : "(no user)");
     res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
     res.json(result);
   } catch (error) {
+    console.log("[DEBUG] /api/companies error:", error);
     res.status(500).json({ error: (error as Error).message });
   }
 });

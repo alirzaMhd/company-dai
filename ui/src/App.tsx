@@ -192,7 +192,8 @@ function CompanyRootRedirect() {
     return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
   }
 
-  console.log("[DEBUG] targetCompany:", targetCompany, "hasCompanies:", companies.length > 0);
+  const targetCompany = selectedCompany ?? companies[0] ?? null;
+  console.log("[DEBUG] targetCompany:", targetCompany, "hasCompanies:", companies.length > 0, "pathname:", location.pathname);
 
   if (!targetCompany) {
     console.log("[DEBUG] CompanyRootRedirect: no targetCompany, checking redirect...");
