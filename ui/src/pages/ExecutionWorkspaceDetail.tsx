@@ -910,7 +910,7 @@ export function ExecutionWorkspaceDetail() {
                   ? workspaceOperationsQuery.error.message
                   : "Failed to load workspace operations."}
               </p>
-            ) : workspaceOperationsQuery.data && workspaceOperationsQuery.data.length > 0 ? (
+            ) : Array.isArray(workspaceOperationsQuery.data) && workspaceOperationsQuery.data.length > 0 ? (
               <div className="space-y-3">
                 {workspaceOperationsQuery.data.map((operation) => (
                   <div key={operation.id} className="rounded-none border border-border/80 bg-background px-4 py-3">

@@ -141,9 +141,10 @@ function resolveRunningIssueRun(
   activeRun: ActiveRunForIssue | null | undefined,
   liveRuns: readonly LiveRunForIssue[] | undefined,
 ) {
+  const runs = Array.isArray(liveRuns) ? liveRuns : [];
   return activeRun?.status === "running"
     ? activeRun
-    : (liveRuns ?? []).find((run) => run.status === "running") ?? null;
+    : runs.find((run) => run.status === "running") ?? null;
 }
 
 function readIssueRunStateFromCache(queryClient: QueryClient, issueId: string) {
@@ -221,7 +222,7 @@ function mergeOptimisticFeedbackVote(
   currentUserId: string | null,
 ): FeedbackVote[] {
   const now = new Date();
-  const existingVotes = previousVotes ?? [];
+  const existingVotes = Array.isArray(previousVotes) ? previousVotes : [];
   const existingIndex = existingVotes.findIndex(
     (feedbackVote) =>
       feedbackVote.targetType === nextVote.targetType &&
@@ -605,7 +606,7 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
     refetchInterval: 3000,
     placeholderData: keepPreviousDataForSameQueryTail<LiveRunForIssue[]>(issueId),
   });
-  const resolvedLiveRuns = liveRuns ?? [];
+  const resolvedLiveRuns = Array.isArray(liveRuns) ? liveRuns : [];
   const liveRunCount = resolvedLiveRuns.length;
   const { data: activeRun = null } = useQuery({
     queryKey: queryKeys.issues.activeRun(issueId),
@@ -625,8 +626,8 @@ const IssueDetailChatTab = memo(function IssueDetailChatTab({
     refetchInterval: hasLiveRuns ? 5000 : false,
     placeholderData: keepPreviousDataForSameQueryTail<RunForIssue[]>(issueId),
   });
-  const resolvedActivity = activity ?? [];
-  const resolvedLinkedRuns = linkedRuns ?? [];
+  const resolvedActivity = Array.isArray(activity) ? activity : [];
+  const resolvedLinkedRuns = Array.isArray(linkedRuns) ? linkedRuns : [];
 
   const runningIssueRun = useMemo(
     () => resolveRunningIssueRun(resolvedActiveRun, resolvedLiveRuns),
@@ -837,7 +838,7 @@ function IssueDetailActivityTab({
     let hasCost = false;
     let hasTokens = false;
 
-    for (const run of linkedRuns ?? []) {
+    for (const run of Array.isArray(linkedRuns) ? linkedRuns : []) {
       const usage = asRecord(run.usageJson);
       const result = asRecord(run.resultJson);
       const runInput = usageNumber(usage, "inputTokens", "input_tokens");
@@ -1127,7 +1128,7 @@ export function IssueDetail() {
   const keyboardShortcutsEnabled = instanceGeneralSettings?.keyboardShortcuts === true;
   const feedbackDataSharingPreference = instanceGeneralSettings?.feedbackDataSharingPreference ?? "prompt";
   const { orderedProjects } = useProjectOrder({
-    projects: projects ?? [],
+    projects: Array.isArray(projects) ? projects : [],
     companyId: selectedCompanyId,
     userId: currentUserId,
   });
@@ -1149,7 +1150,8 @@ export function IssueDetail() {
 
   const agentMap = useMemo(() => {
     const map = new Map<string, Agent>();
-    for (const a of agents ?? []) map.set(a.id, a);
+    const agentList = Array.isArray(agents) ? agents : [];
+    for (const a of agentList) map.set(a.id, a);
     return map;
   }, [agents]);
   const userProfileMap = useMemo(

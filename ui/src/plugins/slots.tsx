@@ -508,7 +508,7 @@ function usePluginModuleLoader(contributions: PluginUiContribution[] | undefined
   const [, setTick] = useState(0);
 
   useEffect(() => {
-    if (!contributions || contributions.length === 0) return;
+    if (!Array.isArray(contributions) || contributions.length === 0) return;
 
     // Filter to contributions that haven't been loaded yet.
     const unloaded = contributions.filter((c) => {
