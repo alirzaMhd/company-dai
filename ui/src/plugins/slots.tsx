@@ -557,7 +557,8 @@ export function usePluginSlots(filters: SlotFilters): UsePluginSlotsResult {
   const slots = useMemo(() => {
     const allowedTypes = new Set(slotTypesKey.split("|").filter(Boolean) as PluginUiSlotType[]);
     const rows: ResolvedPluginSlot[] = [];
-    for (const contribution of data ?? []) {
+    const contributions = Array.isArray(data) ? data : [];
+    for (const contribution of contributions) {
       for (const slot of contribution.slots) {
         if (!allowedTypes.has(slot.type)) continue;
         if (requiresEntityType(slot.type)) {

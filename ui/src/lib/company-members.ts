@@ -26,7 +26,8 @@ function baseMemberLabel(member: Pick<CompanyUserRecord, "principalId" | "user">
 
 function activeUniqueMembers(members: CompanyUserRecord[] | null | undefined) {
   const byId = new Map<string, CompanyUserRecord>();
-  for (const member of members ?? []) {
+  const memberList = Array.isArray(members) ? members : [];
+  for (const member of memberList) {
     if (member.status !== "active") continue;
     if (!byId.has(member.principalId)) {
       byId.set(member.principalId, member);
@@ -37,7 +38,8 @@ function activeUniqueMembers(members: CompanyUserRecord[] | null | undefined) {
 
 export function buildCompanyUserLabelMap(members: CompanyUserRecord[] | null | undefined): Map<string, string> {
   const labels = new Map<string, string>();
-  for (const member of members ?? []) {
+  const memberList = Array.isArray(members) ? members : [];
+  for (const member of memberList) {
     labels.set(member.principalId, baseMemberLabel(member));
   }
   return labels;
@@ -47,7 +49,8 @@ export function buildCompanyUserProfileMap(
   members: CompanyUserRecord[] | null | undefined,
 ): Map<string, CompanyUserProfile> {
   const profiles = new Map<string, CompanyUserProfile>();
-  for (const member of members ?? []) {
+  const memberList = Array.isArray(members) ? members : [];
+  for (const member of memberList) {
     profiles.set(member.principalId, {
       label: baseMemberLabel(member),
       image: member.user?.image ?? null,
@@ -89,9 +92,11 @@ export function buildMarkdownMentionOptions(args: {
   projects?: Array<Pick<Project, "id" | "name" | "color">> | null | undefined;
   members?: CompanyUserRecord[] | null | undefined;
 }): MentionOption[] {
+  const agentList = Array.isArray(args.agents) ? args.agents : [];
+  const projectList = Array.isArray(args.projects) ? args.projects : [];
   const options: MentionOption[] = [
     ...buildCompanyUserMentionOptions(args.members),
-    ...[...(args.agents ?? [])]
+    ...agentList
       .filter((agent) => agent.status !== "terminated")
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((agent) => ({
@@ -101,7 +106,7 @@ export function buildMarkdownMentionOptions(args: {
         agentId: agent.id,
         agentIcon: agent.icon,
       })),
-    ...[...(args.projects ?? [])]
+    ...projectList
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((project) => ({
         id: `project:${project.id}`,

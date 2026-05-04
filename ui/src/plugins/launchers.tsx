@@ -277,7 +277,8 @@ export function usePluginLaunchers(
 
   const contributionsByPluginId = useMemo(() => {
     const byPluginId = new Map<string, PluginUiContribution>();
-    for (const contribution of data ?? []) {
+    const contributions = Array.isArray(data) ? data : [];
+    for (const contribution of contributions) {
       byPluginId.set(contribution.pluginId, contribution);
     }
     return byPluginId;
@@ -288,7 +289,8 @@ export function usePluginLaunchers(
       placementZonesKey.split("|").filter(Boolean) as PluginLauncherPlacementZone[],
     );
     const rows: ResolvedPluginLauncher[] = [];
-    for (const contribution of data ?? []) {
+    const contributions = Array.isArray(data) ? data : [];
+    for (const contribution of contributions) {
       for (const launcher of contribution.launchers) {
         if (!placementZones.has(launcher.placementZone)) continue;
         if (entityScopedZones.has(launcher.placementZone)) {

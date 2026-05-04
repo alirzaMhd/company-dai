@@ -131,7 +131,7 @@ export function CompanyRail() {
   const isInstanceRoute = location.pathname.startsWith("/instance/");
   const highlightedCompanyId = isInstanceRoute ? null : selectedCompanyId;
   const sidebarCompanies = useMemo(
-    () => companies.filter((company) => company.status !== "archived"),
+    () => (Array.isArray(companies) ? companies.filter((company) => company.status !== "archived") : []),
     [companies],
   );
   const { data: session } = useQuery({
@@ -139,7 +139,7 @@ export function CompanyRail() {
     queryFn: () => authApi.getSession(),
   });
   const currentUserId = session?.user?.id ?? session?.session?.userId ?? null;
-  const companyIds = useMemo(() => sidebarCompanies.map((company) => company.id), [sidebarCompanies]);
+  const companyIds = useMemo(() => Array.isArray(sidebarCompanies) ? sidebarCompanies.map((company) => company.id) : [], [sidebarCompanies]);
 
   const liveRunsQueries = useQueries({
     queries: companyIds.map((companyId) => ({
