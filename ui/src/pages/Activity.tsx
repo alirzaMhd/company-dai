@@ -109,11 +109,11 @@ export function Activity() {
   }
 
   const filtered =
-    data && filter !== "all"
+    Array.isArray(data) && filter !== "all"
       ? data.filter((e) => e.entityType === filter)
       : data;
 
-  const entityTypes = data
+  const entityTypes = Array.isArray(data)
     ? [...new Set(data.map((e) => e.entityType))].sort()
     : [];
 

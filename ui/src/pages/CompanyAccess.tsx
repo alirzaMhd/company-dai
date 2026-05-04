@@ -248,10 +248,10 @@ export function CompanyAccess() {
     return <div className="text-sm text-destructive">{message}</div>;
   }
 
-  const members = membersQuery.data?.members ?? [];
+  const members = Array.isArray(membersQuery.data?.members) ? membersQuery.data.members : [];
   const access = membersQuery.data?.access;
-  const pendingHumanJoinRequests =
-    joinRequestsQuery.data?.filter((request) => request.requestType === "human") ?? [];
+  const joinRequests = Array.isArray(joinRequestsQuery.data) ? joinRequestsQuery.data : [];
+  const pendingHumanJoinRequests = joinRequests.filter((request) => request.requestType === "human");
   const joinRequestActionPending =
     approveJoinRequestMutation.isPending || rejectJoinRequestMutation.isPending;
   const implicitGrantKeys = getImplicitGrantKeys(draftRole);
@@ -262,8 +262,8 @@ export function CompanyAccess() {
       member.principalType === "user" &&
       member.id !== removingMemberId,
   );
-  const activeReassignmentAgents = (agentsQuery.data ?? []).filter(isAssignableAgent);
-  const assignedIssues = assignedIssuesQuery.data ?? [];
+  const activeReassignmentAgents = (Array.isArray(agentsQuery.data) ? agentsQuery.data : []).filter(isAssignableAgent);
+  const assignedIssues = Array.isArray(assignedIssuesQuery.data) ? assignedIssuesQuery.data : [];
 
   return (
     <div className="max-w-6xl space-y-8">
