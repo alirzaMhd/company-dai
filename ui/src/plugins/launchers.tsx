@@ -270,10 +270,10 @@ export function usePluginLaunchers(
     enabled: queryEnabled,
   });
 
-  const placementZonesKey = useMemo(
-    () => [...filters.placementZones].sort().join("|"),
-    [filters.placementZones],
-  );
+  const placementZonesKey = useMemo(() => {
+    const zones = Array.isArray(filters.placementZones) ? filters.placementZones : [];
+    return [...zones].sort().join("|");
+  }, [filters.placementZones]);
 
   const contributionsByPluginId = useMemo(() => {
     const byPluginId = new Map<string, PluginUiContribution>();

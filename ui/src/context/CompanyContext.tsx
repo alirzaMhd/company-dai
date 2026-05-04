@@ -56,7 +56,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     retry: false,
   });
   const sidebarCompanies = useMemo(
-    () => companies.filter((company) => company.status !== "archived"),
+    () => (Array.isArray(companies) ? companies.filter((company) => company.status !== "archived") : []),
     [companies],
   );
 

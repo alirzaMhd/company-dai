@@ -88,8 +88,8 @@ export function Dashboard() {
     [companyMembers?.users],
   );
 
-  const recentIssues = issues ? getRecentIssues(issues) : [];
-  const recentActivity = useMemo(() => (activity ?? []).slice(0, 10), [activity]);
+  const recentIssues = Array.isArray(issues) ? getRecentIssues(issues) : [];
+  const recentActivity = useMemo(() => (Array.isArray(activity) ? activity : []).slice(0, 10), [activity]);
 
   useEffect(() => {
     for (const timer of activityAnimationTimersRef.current) {
@@ -148,26 +148,31 @@ export function Dashboard() {
 
   const agentMap = useMemo(() => {
     const map = new Map<string, Agent>();
-    for (const a of agents ?? []) map.set(a.id, a);
+    const agentList = Array.isArray(agents) ? agents : [];
+    for (const a of agentList) map.set(a.id, a);
     return map;
   }, [agents]);
 
   const entityNameMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const i of issues ?? []) map.set(`issue:${i.id}`, i.identifier ?? i.id.slice(0, 8));
-    for (const a of agents ?? []) map.set(`agent:${a.id}`, a.name);
-    for (const p of projects ?? []) map.set(`project:${p.id}`, p.name);
+    const issueList = Array.isArray(issues) ? issues : [];
+    const agentList = Array.isArray(agents) ? agents : [];
+    const projectList = Array.isArray(projects) ? projects : [];
+    for (const i of issueList) map.set(`issue:${i.id}`, i.identifier ?? i.id.slice(0, 8));
+    for (const a of agentList) map.set(`agent:${a.id}`, a.name);
+    for (const p of projectList) map.set(`project:${p.id}`, p.name);
     return map;
   }, [issues, agents, projects]);
 
   const entityTitleMap = useMemo(() => {
     const map = new Map<string, string>();
-    for (const i of issues ?? []) map.set(`issue:${i.id}`, i.title);
+    const issueList = Array.isArray(issues) ? issues : [];
+    for (const i of issueList) map.set(`issue:${i.id}`, i.title);
     return map;
   }, [issues]);
 
   const agentName = (id: string | null) => {
-    if (!id || !agents) return null;
+    if (!id || !Array.isArray(agents)) return null;
     return agents.find((a) => a.id === id)?.name ?? null;
   };
 
