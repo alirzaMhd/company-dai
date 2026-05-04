@@ -147,6 +147,12 @@ app.use('/api/plugin-ui-static', pluginUiStaticRouter);
 app.use('/api/workspace-command-authz', workspaceCommandAuthzRouter);
 app.use('/api/workspace-runtime-service-authz', workspaceRuntimeServiceAuthzRouter);
 
+// Debug endpoint to log from UI to terminal
+app.use('/api/debug-log', (req, res) => {
+  console.log("[DEBUG-UI]", req.query.message);
+  res.json({ ok: true });
+});
+
 // Serve static files from dist with cache headers
 app.use(express.static(distPath, {
   maxAge: '1y',

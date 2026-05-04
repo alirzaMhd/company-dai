@@ -65,6 +65,8 @@ export async function authMiddleware(
           ))
           .limit(1);
 
+        console.log("[DEBUG] auth session user:", session.user.id, "memberships found:", memberships.length);
+
         const userCompanyId = memberships[0]?.companyId;
         const isInstanceAdmin = memberships.length === 0 || memberships[0]?.membershipRole === "admin" || memberships[0]?.membershipRole === "owner";
 

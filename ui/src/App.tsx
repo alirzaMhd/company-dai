@@ -180,42 +180,51 @@ function CompanyRootRedirect() {
   const { companies, selectedCompany, loading, fetching } = useCompany();
   const location = useLocation();
 
-  console.log("[DEBUG] CompanyRootRedirect:", {
-    companies,
-    companiesLength: companies?.length,
-    companiesJson: JSON.stringify(companies),
-    selectedCompany,
-    loading,
-    fetching,
-  });
+  // Debug: log to terminal via server
+  useEffect(() => {
+    fetch(`/api/debug-log?message=CompanyRootRedirect: companies=${companies?.length}, loading=${loading}, fetching=${fetching}`)
+      .then(() => {})
+      .catch(() => {});
+  }, [companies?.length, loading, fetching]);
 
   if (loading || fetching) {
     return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
   }
 
+  // Debug: log to terminal
+  useEffect(() => {
+    fetch(`/api/debug-log?message=targetCompany: ${targetCompany}, hasCompanies: ${companies.length > 0}, pathname: ${location.pathname}`)
+      .then(() => {})
+      .catch(() => {});
+  }, [companies.length, location.pathname]);
+
   const targetCompany = selectedCompany ?? companies[0] ?? null;
-  console.log("[DEBUG] targetCompany:", targetCompany, "hasCompanies:", companies.length > 0, "pathname:", location.pathname);
 
   if (!targetCompany) {
-    console.log("[DEBUG] CompanyRootRedirect: no targetCompany!");
-    console.log("[DEBUG] selectedCompany is:", selectedCompany);
-    console.log("[DEBUG] companies[0] is:", companies[0]);
-    console.log("[DEBUG] companies.length is:", companies?.length);
+    fetch(`/api/debug-log?message=no targetCompany: selectedCompany=${selectedCompany}, companies[0]=${companies[0]}, length=${companies.length}`)
+      .then(() => {})
+      .catch(() => {});
     
     if (companies.length > 0) {
-      console.log("[DEBUG] FIX: companies exist but targetCompany is null - redirecting to dashboard");
+      fetch(`/api/debug-log?message=FIX: companies exist but targetCompany is null - redirecting to dashboard`)
+        .then(() => {})
+        .catch(() => {});
       const firstCompany = companies[0];
       return <Navigate to={`/${firstCompany.issuePrefix}/dashboard`} replace />;
     }
     
-    console.log("[DEBUG] no companies, checking redirect...");
+    fetch(`/api/debug-log?message=no companies, checking redirect...`)
+      .then(() => {})
+      .catch(() => {});
     if (
       shouldRedirectCompanylessRouteToOnboarding({
         pathname: location.pathname,
         hasCompanies: companies.length > 0,
       })
     ) {
-      console.log("[DEBUG] CompanyRootRedirect: redirecting to /onboarding");
+      fetch(`/api/debug-log?message=redirecting to /onboarding`)
+        .then(() => {})
+        .catch(() => {});
       return <Navigate to="/onboarding" replace />;
     }
     return <NoCompaniesStartPage />;

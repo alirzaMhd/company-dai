@@ -8,10 +8,12 @@ const router = Router();
 
 router.get("/", async (req, res) => {
   try {
+    console.log("[DEBUG] /api/companies called - actors:", JSON.stringify(req.actor));
     const result = await db.select().from(companies);
-    console.log("[DEBUG] /api/companies result:", result.length, "rows", req.actor?.userId ? `userId=${req.actor.userId}` : "(no user)");
+    console.log("[DEBUG] /api/companies returning companies:", result.length, "companies:", result.map(c => ({ id: c.id.substring(0,8), name: c.name })));
+    const response = { companies: result };
     res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=300");
-    res.json(result);
+    res.json(response);
   } catch (error) {
     console.log("[DEBUG] /api/companies error:", error);
     res.status(500).json({ error: (error as Error).message });
