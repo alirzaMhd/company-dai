@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "@/lib/router";
 import { authApi } from "../api/auth";
 import { queryKeys } from "../lib/queryKeys";
 import { getRememberedInvitePath } from "../lib/invite-memory";
+import { useCompany } from "../context/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { AsciiArtAnimation } from "@/components/AsciiArtAnimation";
 import { Sparkles } from "lucide-react";
@@ -20,8 +21,10 @@ export function AuthPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const { companies, loading: companiesLoading } = useCompany();
+
   const nextPath = useMemo(
-    () => searchParams.get("next") || getRememberedInvitePath() || "/",
+    () => searchParams.get("next") || getRememberedInvitePath(),
     [searchParams],
   );
   const { data: session, isLoading: isSessionLoading } = useQuery({
@@ -30,11 +33,17 @@ export function AuthPage() {
     retry: false,
   });
 
+  const getRedirectPath = () => {
+    if (nextPath && nextPath !== "/") return nextPath;
+    if (companies.length === 0) return "/onboarding";
+    return "/dashboard";
+  };
+
   useEffect(() => {
-    if (session) {
-      navigate(nextPath, { replace: true });
+    if (session && !isSessionLoading && !companiesLoading) {
+      navigate(getRedirectPath(), { replace: true });
     }
-  }, [session, navigate, nextPath]);
+  }, [session, isSessionLoading, companiesLoading, navigate, companies]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -52,7 +61,11 @@ export function AuthPage() {
       setError(null);
       await queryClient.invalidateQueries({ queryKey: queryKeys.auth.session });
       await queryClient.invalidateQueries({ queryKey: queryKeys.companies.all });
-      navigate(nextPath, { replace: true });
+      if (companies.length === 0) {
+        navigate("/onboarding", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     },
     onError: (err) => {
       setError(err instanceof Error ? err.message : "Authentication failed");

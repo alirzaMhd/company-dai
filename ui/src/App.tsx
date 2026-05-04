@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes, useLocation, useParams } from "@/lib/router";
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigate, useParams } from "@/lib/router";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Layout } from "./components/Layout";
@@ -179,103 +179,74 @@ function OnboardingRoutePage() {
 function CompanyRootRedirect() {
   const { companies, selectedCompany, loading, fetching } = useCompany();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // Debug: log to terminal via server
   useEffect(() => {
-    fetch(`/api/debug-log?message=CompanyRootRedirect: companies=${companies?.length}, loading=${loading}, fetching=${fetching}`)
-      .then(() => {})
-      .catch(() => {});
-  }, [companies?.length, loading, fetching]);
+    if (loading || fetching) return;
+
+    const targetCompany = selectedCompany ?? companies[0] ?? null;
+    if (!targetCompany) {
+      if (companies.length > 0) {
+        navigate(`/${companies[0].issuePrefix}/dashboard`, { replace: true });
+        return;
+      }
+      if (shouldRedirectCompanylessRouteToOnboarding({
+        pathname: location.pathname,
+        hasCompanies: companies.length > 0,
+      })) {
+        navigate("/onboarding", { replace: true });
+      }
+      return;
+    }
+
+    navigate(`/${targetCompany.issuePrefix}/dashboard`, { replace: true });
+  }, [loading, fetching, companies, selectedCompany, location.pathname, navigate]);
 
   if (loading || fetching) {
     return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
   }
 
-  // Debug: log to terminal
-  useEffect(() => {
-    fetch(`/api/debug-log?message=targetCompany: ${targetCompany}, hasCompanies: ${companies.length > 0}, pathname: ${location.pathname}`)
-      .then(() => {})
-      .catch(() => {});
-  }, [companies.length, location.pathname]);
-
-  const targetCompany = selectedCompany ?? companies[0] ?? null;
-
-  fetch(`/api/debug-log?message=BEFORE: targetCompany=${!!targetCompany}, companies[0]=${companies[0]?.name}, sel=${selectedCompany?.name}, len=${companies.length}`)
-    .then(() => {})
-    .catch(() => {});
-
-  // Final decision debug
-  useEffect(() => {
-    const decision = targetCompany 
-      ? `REDIRECT to /${targetCompany.issuePrefix}/dashboard` 
-      : companies.length > 0 
-        ? `REDIRECT to /${companies[0].issuePrefix}/dashboard (FIX)` 
-        : "REDIRECT to /onboarding";
-    fetch(`/api/debug-log?message=FINAL: ${decision}`)
-      .then(() => {})
-      .catch(() => {});
-  }, [targetCompany, companies.length]);
-
-  if (!targetCompany) {
-    fetch(`/api/debug-log?message=no targetCompany: selectedCompany=${selectedCompany}, companies[0]=${companies[0]}, length=${companies.length}`)
-      .then(() => {})
-      .catch(() => {});
-    
-    if (companies.length > 0) {
-      fetch(`/api/debug-log?message=FIX: companies exist but targetCompany is null - redirecting to dashboard`)
-        .then(() => {})
-        .catch(() => {});
-      const firstCompany = companies[0];
-      return <Navigate to={`/${firstCompany.issuePrefix}/dashboard`} replace />;
-    }
-    
-    fetch(`/api/debug-log?message=no companies, checking redirect...`)
-      .then(() => {})
-      .catch(() => {});
-    if (
-      shouldRedirectCompanylessRouteToOnboarding({
-        pathname: location.pathname,
-        hasCompanies: companies.length > 0,
-      })
-    ) {
-      fetch(`/api/debug-log?message=redirecting to /onboarding`)
-        .then(() => {})
-        .catch(() => {});
-      return <Navigate to="/onboarding" replace />;
-    }
+  if (!selectedCompany && companies.length === 0) {
     return <NoCompaniesStartPage />;
   }
 
-  return <Navigate to={`/${targetCompany.issuePrefix}/dashboard`} replace />;
+  return null;
 }
 
 function UnprefixedBoardRedirect() {
   const location = useLocation();
   const { companies, selectedCompany, loading, fetching } = useCompany();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading || fetching) return;
+
+    const targetCompany = selectedCompany ?? companies[0] ?? null;
+    if (!targetCompany) {
+      if (shouldRedirectCompanylessRouteToOnboarding({
+        pathname: location.pathname,
+        hasCompanies: companies.length > 0,
+      })) {
+        navigate("/onboarding", { replace: true });
+      }
+      return;
+    }
+
+    navigate(
+      `/${targetCompany.issuePrefix}${location.pathname}${location.search}${location.hash}`,
+      { replace: true }
+    );
+  }, [loading, fetching, companies, selectedCompany, location.pathname, location.search, location.hash, navigate]);
 
   if (loading || fetching) {
     return <div className="mx-auto max-w-xl py-10 text-sm text-muted-foreground">Loading...</div>;
   }
 
-  const targetCompany = selectedCompany ?? companies[0] ?? null;
-  if (!targetCompany) {
-    if (
-      shouldRedirectCompanylessRouteToOnboarding({
-        pathname: location.pathname,
-        hasCompanies: companies.length > 0,
-      })
-    ) {
-      return <Navigate to="/onboarding" replace />;
-    }
+  if (!selectedCompany && companies.length === 0) {
     return <NoCompaniesStartPage />;
   }
 
-  return (
-    <Navigate
-      to={`/${targetCompany.issuePrefix}${location.pathname}${location.search}${location.hash}`}
-      replace
-    />
-  );
+  return null;
 }
 
 function NoCompaniesStartPage() {
